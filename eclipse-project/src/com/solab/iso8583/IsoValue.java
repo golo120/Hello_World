@@ -41,7 +41,11 @@ public class IsoValue<T> {
 		}
 		type = t;
 		this.value = value;
-		length = type.getLength();
+		if (type == IsoType.LLVAR || type == IsoType.LLLVAR) {
+			length = value.toString().length();
+		} else {
+			length = type.getLength();
+		}
 	}
 
 	/** Creates a new instance that stores the specified value as the specified type.

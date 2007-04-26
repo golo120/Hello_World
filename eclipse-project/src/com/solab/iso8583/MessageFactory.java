@@ -27,6 +27,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.solab.iso8583.parse.FieldParseInfo;
 
 /** This class is used to create messages, either from scratch or from an existing String or byte
@@ -43,6 +46,8 @@ import com.solab.iso8583.parse.FieldParseInfo;
  */
 public class MessageFactory {
 
+	protected static final Log log = LogFactory.getLog(MessageFactory.class);
+
 	/** This map stores the message template for each message type. */
 	private Map<Integer, IsoMessage> typeTemplates = new HashMap<Integer, IsoMessage>();
 	private Map<Integer, Map<Integer, FieldParseInfo>> parseMap = new HashMap<Integer, Map<Integer, FieldParseInfo>>();
@@ -53,9 +58,6 @@ public class MessageFactory {
 	private Map<Integer, String> isoHeaders = new HashMap<Integer, String>();
 	/** Indicates if the current should be set on new messages (field 7). */
 	private boolean setDate;
-
-	public MessageFactory() {
-	}
 
 	/** Creates a new message of the specified type, with optional trace and date values as well
 	 * as any other values specified in a message template. */
@@ -95,37 +97,39 @@ public class MessageFactory {
 		BitSet bs = new BitSet(64);
 		int pos = 0;
 		for (int i = isoHeaderLength + 4; i < isoHeaderLength + 20; i++) {
-			bs.set(pos++, (buf[i] & 8));
-			bs.set(pos++, (buf[i] & 4));
-			bs.set(pos++, (buf[i] & 2));
-			bs.set(pos++, (buf[i] & 1));
+			int hex = Integer.parseInt(new String(buf, i, 1), 16);
+			bs.set(pos++, (hex & 8) > 0);
+			bs.set(pos++, (hex & 4) > 0);
+			bs.set(pos++, (hex & 2) > 0);
+			bs.set(pos++, (hex & 1) > 0);
 		}
 		//Check for secondary bitmap and parse it if necessary
 		if (bs.get(0)) {
 			for (int i = isoHeaderLength + 20; i < isoHeaderLength + 36; i++) {
-				bs.set(pos++, (buf[i] & 8));
-				bs.set(pos++, (buf[i] & 4));
-				bs.set(pos++, (buf[i] & 2));
-				bs.set(pos++, (buf[i] & 1));
+				int hex = Integer.parseInt(new String(buf, i, 1), 16);
+				bs.set(pos++, (hex & 8) > 0);
+				bs.set(pos++, (hex & 4) > 0);
+				bs.set(pos++, (hex & 2) > 0);
+				bs.set(pos++, (hex & 1) > 0);
 			}
-			pos = 36;
+			pos = 36 + isoHeaderLength;
 		} else {
-			pos = 20;
+			pos = 20 + isoHeaderLength;
 		}
 		//Parse each field
 		Map<Integer, FieldParseInfo> parseGuide = parseMap.get(type);
 		List<Integer> index = parseOrder.get(type);
-		//TODO this should be done at config time
-		if (index == null) {
-			index = new ArrayList<Integer>();
-			index.addAll(parseGuide.keySet());
-			Collections.sort(index);
-		}
 		for (Integer i : index) {
 			FieldParseInfo fpi = parseGuide.get(i);
 			if (bs.get(i - 1)) {
 				IsoValue val = fpi.parse(buf, pos);
 				m.setField(i, val);
+				pos += val.getLength();
+				if (val.getType() == IsoType.LLVAR) {
+					pos += 2;
+				} else if (val.getType() == IsoType.LLLVAR) {
+					pos += 3;
+				}
 			}
 		}
 		return m;
@@ -159,10 +163,25 @@ public class MessageFactory {
 		isoHeaders.putAll(value);
 	}
 
+	/** Sets the ISO header for a specific message type. */
+	public void setIsoHeader(int type, String value) {
+		isoHeaders.put(type, value);
+	}
+
 	/** Sets a message template for a specified message type. When new messages of that type
 	 * are created, they will have the same values as the template. */
-	public void setMessageType(int type, IsoMessage templ) {
+	public void setMessageTemplate(int type, IsoMessage templ) {
 		typeTemplates.put(type, templ);
+	}
+
+	/** Sets a map with the fields that are to be expected when parsing a certain type of
+	 * message. */
+	public void setParseMap(int type, Map<Integer, FieldParseInfo> map) {
+		parseMap.put(type, map);
+		ArrayList<Integer> index = new ArrayList<Integer>();
+		index.addAll(map.keySet());
+		Collections.sort(index);
+		parseOrder.put(type, index);
 	}
 
 }

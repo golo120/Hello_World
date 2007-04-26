@@ -1,0 +1,55 @@
+{\rtf1\mac\ansicpg10000\cocoartf824\cocoasubrtf410
+{\fonttbl\f0\fswiss\fcharset77 Helvetica-Bold;\f1\fswiss\fcharset77 Helvetica;\f2\fnil\fcharset77 Monaco;
+}
+{\colortbl;\red255\green255\blue255;}
+{\info
+{\author Enrique Zamudio Lopez}
+{\*\company Solab}
+{\*\copyright 2005 Desarrollo de Soluciones Abiertas S.C.}}\margl1440\margr1440\vieww9600\viewh8400\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f0\b\fs24 \cf0 j8583 XML Configuration\
+
+\f1\b0 \
+The j8583 MessageFactory can be configured from a XML file. Here is the description of the file format. There is no DTD at the time, I hope to have one soon.\
+\
+The file needs to start and end with the tag 
+\f2\fs20 <j8583-config>
+\f1\fs24 . Inside these tags is all the configuration data, which basically consists of three different types of elements: header, template, and parse.\
+\
+The 
+\f2\fs20 header
+\f1\fs24  element is used to specify an ISO header string that must be placed at the beginning of each message when it is written. Example:\
+\
+
+\f2\fs20 <header type="0200">ISO015000015</header>\
+
+\f1\fs24 \
+The 
+\f2\fs20 template
+\f1\fs24  element is used to specify a message template for a certain message type. This element can contain many 
+\f2\fs20 field
+\f1\fs24  elements, each of which specify the field number, data type and length, as well as the data, which will be converted to the apropriate class depending on the specified type.\
+\
+
+\f2\fs20 <template type="200">\
+	<field num="3" type="NUMERIC" length="6">650000</field>\
+	<field num="37" type="NUMERIC" length="12">1234</field>\
+</template>\
+
+\f1\fs24 \
+The 
+\f2\fs20 parse
+\f1\fs24  element can be used to specify what fields to expect when parsing a message from a byte buffer:\
+\
+
+\f2\fs20 <parse type="0210">\
+	<field num="3" type="NUMERIC" length="6" />\
+	<field num="4" type="AMOUNT" />\
+	<field num="7" type="DATE10" />\
+	<field num="11" type="NUMERIC" length=6" />\
+	<field num="37" type="NUMERIC" length="12" />\
+	<field num="38" type="NUMERIC" length="6" />\
+	<field num="39" type="NUMERIC" length="2" />\
+</parse>\
+}

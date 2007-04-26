@@ -58,6 +58,10 @@ public class IsoMessage {
     	isoHeader = header;
     }
 
+    public String getIsoHeader() {
+    	return isoHeader;
+    }
+
     /** Sets the ISO message type. Common values are 0x200, 0x210, 0x400, 0x410, 0x800, 0x810. */
     public void setType(int value) {
     	type = value;
@@ -124,6 +128,10 @@ public class IsoMessage {
     		}
     		fields.put(index, v);
     	}
+    }
+
+    public boolean hasField(int idx) {
+    	return fields.get(idx) != null;
     }
 
     /** Writes a message to a stream, after writing the specified number of bytes indicating

@@ -35,8 +35,6 @@ public class FieldParseInfo {
 	private IsoType type;
 	private int length;
 
-	public FieldParseInfo() {}
-
 	public FieldParseInfo(IsoType t, int len) {
 		type = t;
 		length = len;
@@ -63,7 +61,7 @@ public class FieldParseInfo {
 			length = ((buf[pos] - 48) * 100) + ((buf[pos + 1] - 48) * 10) + (buf[pos + 2] - 48);
 			return new IsoValue<String>(type, new String(buf, pos + 3, length));
 		} else if (type == IsoType.AMOUNT) {
-			char[] c = new char[13];
+			byte[] c = new byte[13];
 			System.arraycopy(buf, pos, c, 0, 10);
 			System.arraycopy(buf, pos + 10, c, 11, 2);
 			c[10] = '.';
