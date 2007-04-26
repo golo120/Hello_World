@@ -1,0 +1,25 @@
+<project name="j8583" default="all">
+
+<target name="all" depends="build,pack" />
+
+<target name="build">
+	<mkdir dir="eclipse-project/bin" />
+	<javac srcdir="eclipse-project/src" destdir="eclipse-project/bin"
+			includes="**/*.java">
+		<classpath>
+			<fileset dir="eclipse-project/lib" includes="*.jar" />
+		</classpath>
+	</javac>
+</target>
+
+<target name="doc">
+</target>
+
+<target name="pack" depends="build">
+	<delete file="j8583.jar" />
+	<jar jarfile="j8583.jar" index="true">
+		<fileset dir="eclipse-project/bin" includes="**/*.class" />
+	</jar>
+</target>
+
+</project>
