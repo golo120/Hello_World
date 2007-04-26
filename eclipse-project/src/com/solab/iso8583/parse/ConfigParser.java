@@ -16,6 +16,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import com.solab.iso8583.IsoMessage;
 import com.solab.iso8583.IsoType;
 import com.solab.iso8583.MessageFactory;
 
@@ -97,6 +98,28 @@ public class ConfigParser {
 		}
 
 		//Read the message templates
+		nodes = root.getElementsByTagName("template");
+		for (int i = 0; i < nodes.getLength(); i++) {
+			elem = (Element)nodes.item(i);
+			int type = parseType(elem.getAttribute("type"));
+			if (type == -1) {
+				throw new IOException("Invalid type for template: " + elem.getAttribute("type"));
+			}
+			NodeList fields = elem.getElementsByTagName("field");
+			IsoMessage m = new IsoMessage();
+			for (int j = 0; j < fields.getLength(); j++) {
+				Element f = (Element)fields.item(j);
+				int num = Integer.parseInt(f.getAttribute("num"));
+				IsoType itype = IsoType.valueOf(f.getAttribute("type"));
+				int length = 0;
+				if (f.getAttribute("length").length() > 0) {
+					length = Integer.parseInt(f.getAttribute("length"));
+				}
+				String v = f.getChildNodes().item(0).getNodeValue();
+				m.setValue(num, v, itype, length);
+			}
+			mfact.setMessageTemplate(type, m);
+		}
 
 		//Read the parsing guides
 		nodes = root.getElementsByTagName("parse");

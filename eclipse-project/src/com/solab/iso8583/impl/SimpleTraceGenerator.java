@@ -34,7 +34,7 @@ public class SimpleTraceGenerator implements TraceNumberGenerator {
 	 * @param initialValue a number between 1 and 999999.
 	 * @throws IllegalArgumentException if the number is less than 1 or greater than 999999. */
 	public SimpleTraceGenerator(int initialValue) {
-		if (value < 1 || value > 999999) {
+		if (initialValue < 1 || initialValue > 999999) {
 			throw new IllegalArgumentException("Initial value must be between 1 and 999999");
 		}
 		value = initialValue - 1;

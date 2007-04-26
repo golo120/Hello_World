@@ -51,7 +51,7 @@ public class IsoMessage {
     private String isoHeader;
 
     /** Creates a new empty message with no values set. */
-    IsoMessage() {
+    public IsoMessage() {
     }
 
     IsoMessage(String header) {
