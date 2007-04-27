@@ -58,12 +58,18 @@ public class MessageFactory {
 	private Map<Integer, String> isoHeaders = new HashMap<Integer, String>();
 	/** Indicates if the current should be set on new messages (field 7). */
 	private boolean setDate;
+	private int etx = -1;
+
+	public void setEtx(int value) {
+		etx = value;
+	}
 
 	/** Creates a new message of the specified type, with optional trace and date values as well
 	 * as any other values specified in a message template. */
 	public IsoMessage newMessage(int type) {
 		IsoMessage m = new IsoMessage(isoHeaders.get(type));
 		m.setType(type);
+		m.setEtx(etx);
 
 		//Copy the values from the template
 		IsoMessage templ = typeTemplates.get(type);

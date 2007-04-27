@@ -87,8 +87,10 @@ public class IsoValue<T> {
 			} else {
 				return type.format(value.toString(), length);
 			}
-		} else if (type == IsoType.ALPHA || type == IsoType.LLLVAR || type == IsoType.LLLVAR) {
+		} else if (type == IsoType.ALPHA) {
 			return type.format(value.toString(), length);
+		} else if (type == IsoType.LLLVAR || type == IsoType.LLLVAR) {
+			return value.toString();
 		} else if (value instanceof Date) {
 			return type.format((Date)value);
 		}
@@ -105,7 +107,7 @@ public class IsoValue<T> {
 			} else if (type == IsoType.LLLVAR) {
 				outs.write(48);
 			}
-			if (length > 10) {
+			if (length >= 10) {
 				outs.write(((length % 100) / 10) + 48);
 			} else {
 				outs.write(48);

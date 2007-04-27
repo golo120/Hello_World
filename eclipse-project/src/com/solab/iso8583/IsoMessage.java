@@ -49,6 +49,7 @@ public class IsoMessage {
     private Map<Integer,IsoValue<?>> fields = new ConcurrentHashMap<Integer,IsoValue<?>>();
     /** Stores the optional ISO header. */
     private String isoHeader;
+    private int etx = -1;
 
     /** Creates a new empty message with no values set. */
     public IsoMessage() {
@@ -78,6 +79,10 @@ public class IsoMessage {
     /** Returns true if the message is binary coded; default is false. */
     public boolean isBinary() {
     	return binary;
+    }
+
+    public void setEtx(int value) {
+    	etx = value;
     }
 
     /** Returns the stored value in the field, without converting or formatting it. */
@@ -121,10 +126,10 @@ public class IsoMessage {
     		fields.remove(index);
     	} else {
     		IsoValue v = null;
-    		if (t == IsoType.LLVAR || t == IsoType.LLLVAR) {
-    			v = new IsoValue<Object>(t, value);
-    		} else {
+    		if (t.needsLength()) {
     			v = new IsoValue<Object>(t, value, length);
+    		} else {
+    			v = new IsoValue<Object>(t, value);
     		}
     		fields.put(index, v);
     	}
@@ -214,6 +219,9 @@ public class IsoMessage {
     	}
     	if (lengthBytes > 0) {
     		int l = bout.size();
+    		if (etx > -1) {
+    			l++;
+    		}
     		byte[] buf = new byte[lengthBytes];
     		int pos = 0;
     		//TODO
@@ -233,6 +241,10 @@ public class IsoMessage {
     		outs.write(buf);
     	}
     	bout.writeTo(outs);
+    	//ETX
+    	if (etx > -1) {
+    		outs.write(etx);
+    	}
     	outs.flush();
     }
 
