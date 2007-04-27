@@ -23,6 +23,11 @@ import java.io.OutputStream;
 import java.util.Date;
 
 /** Represents a value that is stored in a field inside an ISO8583 message.
+ * It can format the value when the message is generated.
+ * Some values have a fixed length, other values require a length to be specified
+ * so that the value can be padded to the specified length. LLVAR and LLLVAR
+ * values do not need a length specification because the length is calculated
+ * from the stored value.
  * 
  * @author Enrique Zamudio
  */
@@ -34,7 +39,9 @@ public class IsoValue<T> implements Cloneable {
 
 	/** Creates a new instance that stores the specified value as the specified type.
 	 * Useful for storing LLVAR or LLLVAR types, as well as fixed-length value types
-	 * like DATE10, DATE4, AMOUNT, etc. */
+	 * like DATE10, DATE4, AMOUNT, etc.
+	 * @param t the ISO type.
+	 * @param value The value to be stored. */
 	public IsoValue(IsoType t, T value) {
 		if (t.needsLength()) {
 			throw new IllegalArgumentException("Fixed-value types must use constructor that specifies length");
@@ -61,6 +68,7 @@ public class IsoValue<T> implements Cloneable {
 		}
 	}
 
+	/** Returns the ISO type to which the value must be formatted. */
 	public IsoType getType() {
 		return type;
 	}
@@ -99,6 +107,7 @@ public class IsoValue<T> implements Cloneable {
 		return value.toString();
 	}
 
+	/** Returns a copy of the receiver that references the same value object. */
 	@SuppressWarnings("unchecked")
 	public IsoValue<T> clone() {
 		try {
@@ -108,6 +117,8 @@ public class IsoValue<T> implements Cloneable {
 		}
 	}
 
+	/** Returns true of the other object is also an IsoValue and has the same type and length,
+	 * and if other.getValue().equals(getValue()) returns true. */
 	public boolean equals(Object other) {
 		if (other == null || !(other instanceof IsoValue)) {
 			return false;
@@ -116,7 +127,8 @@ public class IsoValue<T> implements Cloneable {
 		return (comp.getType() == getType() && comp.getValue().equals(getValue()) && comp.getLength() == getLength());
 	}
 
-	/** Writes the formatted value to a stream, with the length header if it's a var-length type. */
+	/** Writes the formatted value to a stream, with the length header
+	 * if it's a variable length type. */
 	public void write(OutputStream outs) throws IOException {
 		String v = toString();
 		if (type == IsoType.LLLVAR || type == IsoType.LLVAR) {

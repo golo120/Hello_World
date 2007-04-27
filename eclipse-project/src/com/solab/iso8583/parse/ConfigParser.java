@@ -89,7 +89,9 @@ public class ConfigParser {
 		return mfact;
 	}
 
-	/** Reads the XML from the stream and configures the message factory with its values. */
+	/** Reads the XML from the stream and configures the message factory with its values.
+	 * @param mfact The message factory to be configured with the values read from the XML.
+	 * @param stream The InputStream containing the XML configuration. */
 	protected static void parse(MessageFactory mfact, InputStream stream) throws IOException {
 		final DocumentBuilderFactory docfact = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docb = null;
@@ -173,6 +175,8 @@ public class ConfigParser {
 
 	}
 
+	/** Parses a message type expressed as a hex string and returns the integer number.
+	 * For example, "0200" or "200" return the number 512 (0x200) */
 	private static int parseType(String type) throws IOException {
 		if (type.length() % 2 == 1) {
 			type = "0" + type;

@@ -35,6 +35,10 @@ public class FieldParseInfo {
 	private IsoType type;
 	private int length;
 
+	/** Creates a new instance that parses a value of the specified type, with the specified length.
+	 * The length is only useful for ALPHA and NUMERIC types.
+	 * @param t The ISO type to be parsed.
+	 * @param len The length of the data to be read (useful only for ALPHA and NUMERIC types). */
 	public FieldParseInfo(IsoType t, int len) {
 		type = t;
 		length = len;

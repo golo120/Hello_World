@@ -24,7 +24,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -55,10 +54,12 @@ public class IsoMessage {
     public IsoMessage() {
     }
 
+    /** Creates a new message with the specified ISO header. This will be prepended to the message. */
     IsoMessage(String header) {
     	isoHeader = header;
     }
 
+    /** Returns the ISO header that this message was created with. */
     public String getIsoHeader() {
     	return isoHeader;
     }
@@ -81,11 +82,15 @@ public class IsoMessage {
     	return binary;
     }
 
+    /** Sets the ETX character, which is sent at the end of the message as a terminator.
+     * Default is -1, which means no terminator is sent. */
     public void setEtx(int value) {
     	etx = value;
     }
 
-    /** Returns the stored value in the field, without converting or formatting it. */
+    /** Returns the stored value in the field, without converting or formatting it.
+     * @param field The field number. 1 is the secondary bitmap and is not returned as such;
+     * real fields go from 2 to 128. */
     public Object getObjectValue(int field) {
     	IsoValue<?> v = fields.get(field);
     	if (v == null) {
@@ -94,7 +99,7 @@ public class IsoMessage {
     	return v.getValue();
     }
 
-    /** Returns the IsoValue for the specified field. */
+    /** Returns the IsoValue for the specified field. First real field is 2. */
     public IsoValue<?> getField(int field) {
     	return fields.get(field);
     }
@@ -135,6 +140,8 @@ public class IsoMessage {
     	}
     }
 
+    /** Returns true is the message has a value in the specified field.
+     * @param idx The field number. */
     public boolean hasField(int idx) {
     	return fields.get(idx) != null;
     }
@@ -144,6 +151,8 @@ public class IsoMessage {
      * which will then be dumped into the specified stream. This method flushes the stream
      * after the write. There are at most two write operations to the stream: one for the
      * length header and the other one with the whole message.
+     * @param outs The stream to write the message to.
+     * @param lengthBytes The size of the message length header. Valid ranges are 0 to 4.
      * @throws IllegalArgumentException if the specified length header is more than 4 bytes.
      * @throws IOException if there is a problem writing to the stream. */
     public void write(OutputStream outs, int lengthBytes) throws IOException {
@@ -246,22 +255,6 @@ public class IsoMessage {
     		outs.write(etx);
     	}
     	outs.flush();
-    }
-
-    public static void main(String[] args) throws Exception {
-    	IsoMessage m = new IsoMessage("ISOHEADER");
-    	m.setType(0x200);
-    	m.setValue(3, 650000, IsoType.NUMERIC, 6);
-    	m.setValue(4, 50, IsoType.AMOUNT, 0);
-    	m.setValue(7, new Date(), IsoType.DATE10, 0);
-    	m.setValue(11, 123, IsoType.NUMERIC, 6);
-    	m.setValue(32, "Hola", IsoType.ALPHA, 10);
-    	m.setValue(48, "Probando", IsoType.LLLVAR, 0);
-    	m.write(System.out, 0);
-    	System.out.println();
-    	m.setValue(92, 5, IsoType.NUMERIC, 1);
-    	m.write(System.out, 0);
-    	System.out.println();
     }
 
 }

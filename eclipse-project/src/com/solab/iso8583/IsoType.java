@@ -24,19 +24,32 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /** Defines the possible values types that can be used in the fields.
+ * Some types required the length of the value to be specified (NUMERIC
+ * and ALPHA). Other types have a fixed length, like dates and times.
+ * Other types do not require a length to be specified, like LLVAR
+ * and LLLVAR.
  * 
  * @author Enrique Zamudio
  */
 public enum IsoType {
 
+	/** A fixed-length numeric value. It is zero-filled to the left. */
 	NUMERIC(true, 0),
+	/** A fixed-length alphanumeric value. It is filled with spaces to the right. */
 	ALPHA(true, 0),
+	/** A variable length alphanumeric value with a 2-digit header length. */
 	LLVAR(false, 0),
+	/** A variable length alphanumeric value with a 3-digit header length. */
 	LLLVAR(false, 0),
+	/** A date in format MMddHHmmss */
 	DATE10(false, 10),
+	/** A date in format MMdd */
 	DATE4(false, 4),
+	/** A date in format yyMM */
 	DATE_EXP(false, 4),
+	/** Time of day in format HHmmss */
 	TIME(false, 6),
+	/** An amount, expressed in cents with a fixed length of 12. */
 	AMOUNT(false, 12);
 
 	private boolean needsLen;
