@@ -5,7 +5,7 @@
 <target name="build">
 	<mkdir dir="eclipse-project/bin" />
 	<javac srcdir="eclipse-project/src" destdir="eclipse-project/bin"
-			includes="**/*.java">
+			includes="com/**/*.java">
 		<classpath>
 			<fileset dir="eclipse-project/lib" includes="*.jar" />
 		</classpath>
@@ -18,7 +18,10 @@
 <target name="pack" depends="build">
 	<delete file="j8583.jar" />
 	<jar jarfile="j8583.jar" index="true">
-		<fileset dir="eclipse-project/bin" includes="**/*.class" />
+		<fileset dir="eclipse-project/bin" includes="com/**/*.class" />
+	</jar>
+	<jar jarfile="example.jar" index="true">
+		<fileset dir="eclipse-project/bin" includes="j8583/example/*.class" />
 	</jar>
 </target>
 
