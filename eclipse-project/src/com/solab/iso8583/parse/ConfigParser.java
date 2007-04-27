@@ -33,6 +33,7 @@ public class ConfigParser {
 	 * located in the root of the classpath. */
 	public static MessageFactory createDefault() throws IOException {
 		if (MessageFactory.class.getClassLoader().getResource("j8583.xml") == null) {
+			log.warn("j8583.xml not found, returning empty message factory");
 			return new MessageFactory();
 		} else {
 			return createFromClasspathConfig("j8583.xml");
@@ -44,11 +45,16 @@ public class ConfigParser {
 		InputStream ins = MessageFactory.class.getClassLoader().getResourceAsStream(path);
 		MessageFactory mfact = new MessageFactory();
 		if (ins != null) {
+			if (log.isDebugEnabled()) {
+				log.debug("Parsing config from classpath file " + path);
+			}
 			try {
 				parse(mfact, ins);
 			} finally {
 				ins.close();
 			}
+		} else {
+			log.warn("File not found in classpath: " + path);
 		}
 		return mfact;
 	}
@@ -94,6 +100,9 @@ public class ConfigParser {
 				throw new IOException("Invalid header element");
 			}
 			String header = elem.getChildNodes().item(0).getNodeValue();
+			if (log.isTraceEnabled()) {
+				log.trace("Adding ISO header for type " + elem.getAttribute("type") + ": " + header);
+			}
 			mfact.setIsoHeader(type, header);
 		}
 

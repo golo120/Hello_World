@@ -179,6 +179,7 @@ public class IsoMessage {
     		BitSet b2 = new BitSet(128);
     		b2.or(bs);
     		bs = b2;
+    		bs.set(0);
     	}
     	//Write bitmap to stream
     	if (binary) {
@@ -224,7 +225,6 @@ public class IsoMessage {
     		}
     		byte[] buf = new byte[lengthBytes];
     		int pos = 0;
-    		//TODO
     		if (lengthBytes == 4) {
     			buf[0] = (byte)((l & 0xff000000) >> 24);
     			pos++;

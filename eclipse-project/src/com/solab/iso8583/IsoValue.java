@@ -26,7 +26,7 @@ import java.util.Date;
  * 
  * @author Enrique Zamudio
  */
-public class IsoValue<T> {
+public class IsoValue<T> implements Cloneable {
 
 	private IsoType type;
 	private int length;
@@ -56,6 +56,8 @@ public class IsoValue<T> {
 		length = len;
 		if (length == 0 && t.needsLength()) {
 			throw new IllegalArgumentException("Length must be greater than zero");
+		} else if (t == IsoType.LLVAR || t == IsoType.LLLVAR) {
+			length = val.toString().length();
 		}
 	}
 
@@ -95,6 +97,23 @@ public class IsoValue<T> {
 			return type.format((Date)value);
 		}
 		return value.toString();
+	}
+
+	@SuppressWarnings("unchecked")
+	public IsoValue<T> clone() {
+		try {
+			return (IsoValue<T>)super.clone();
+		} catch (CloneNotSupportedException ex) {
+			return null;
+		}
+	}
+
+	public boolean equals(Object other) {
+		if (other == null || !(other instanceof IsoValue)) {
+			return false;
+		}
+		IsoValue comp = (IsoValue)other;
+		return (comp.getType() == getType() && comp.getValue().equals(getValue()) && comp.getLength() == getLength());
 	}
 
 	/** Writes the formatted value to a stream, with the length header if it's a var-length type. */

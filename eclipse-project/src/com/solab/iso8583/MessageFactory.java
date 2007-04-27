@@ -75,7 +75,9 @@ public class MessageFactory {
 		IsoMessage templ = typeTemplates.get(type);
 		if (templ != null) {
 			for (int i = 2; i < 128; i++) {
-				m.setField(i, templ.getField(i));
+				if (templ.hasField(i)) {
+					m.setField(i, templ.getField(i).clone());
+				}
 			}
 		}
 		if (traceGen != null) {
@@ -85,6 +87,30 @@ public class MessageFactory {
 			m.setValue(7, new Date(), IsoType.DATE10, 10);
 		}
 		return m;
+	}
+
+	/** Creates a message to respond to a request. Increments the message type by 16,
+	 * sets all fields from the template if there is one, and copies all values from the request,
+	 * overwriting fields from the template if they overlap. */
+	public IsoMessage createResponse(IsoMessage request) {
+		IsoMessage resp = new IsoMessage(isoHeaders.get(request.getType() + 16));
+		resp.setType(request.getType() + 16);
+		resp.setEtx(etx);
+		//Copy the values from the template
+		IsoMessage templ = typeTemplates.get(resp.getType());
+		if (templ != null) {
+			for (int i = 2; i < 128; i++) {
+				if (templ.hasField(i)) {
+					resp.setField(i, templ.getField(i).clone());
+				}
+			}
+		}
+		for (int i = 2; i < 128; i++) {
+			if (request.hasField(i)) {
+				resp.setField(i, request.getField(i).clone());
+			}
+		}
+		return resp;
 	}
 
 	/** Creates a new message instance from the buffer, which must contain a valid ISO8583
@@ -187,6 +213,7 @@ public class MessageFactory {
 		ArrayList<Integer> index = new ArrayList<Integer>();
 		index.addAll(map.keySet());
 		Collections.sort(index);
+		log.trace("Adding parse map for type " + Integer.toHexString(type) + " with fields " + index);
 		parseOrder.put(type, index);
 	}
 
