@@ -1,0 +1,52 @@
+<html>
+<link rel="stylesheet" href="http://ezcontent.sourceforge.net/estilo.css" />
+<head><title>j8583 Framework :: XML Configuration</title></head>
+<body>
+<h1>j8583 XML Configuration</h1>
+<P>The XML file you use to configure a MessageFactory can include definitions for the ISO headers, messages templates, and parsing guides.
+
+<h3>ISO headers</h3>
+<P>Sometimes, ISO8583 messages have a header at the beginning of the message (after the length header). These tend to be fixed and can be defined in the XML config like this:</P>
+
+<P><PRE><CODE>
+  &lt;header type="200"&gt;ISO015000050&lt;/header&gt;
+  &lt;header type="410"&gt;ISO015000055&lt;/header&gt;
+</code></pre></p>
+<P>In this case, headers are being defined for messages of type 200 and 400. When messages of this type are created with the MessageFactory, they will have their respective headers already set.</P>
+
+<h3>Message templates</h3>
+<P>Usually when setting up a system that will use ISO8583 to communicate with another system, several fields in the messages have always the same value. Message templates are useful to define the values for these fields, so that your application code must only focus on fields that have a different value for each message. For example, if you must create messages of type 0200 that always have the same values in fields 3, 32 and 60, then you define this in your XML:</P>
+
+<P><PRE><CODE>
+  &lt;template type="200"&gt;
+    &lt;field num="3" type="NUMERIC" length="6"&gt;123&lt;/field&gt;
+    &lt;field num="32" type="LLVAR"&gt;SomeFixedValue&lt;/field&gt;
+    &lt;field num="60" type="ALPHA" length="40"&gt;SomeOtherValueToBePaddedAtRuntime&lt;/field&gt;
+  &lt;/template&gt;
+</code></pre></p>
+
+<P>For every field, you define the field number, the value type, and optionally the length. The length is only needed for fields of type NUMERIC and ALPHA, and will be used to pad the value to the specified length. In this case, three zeroes will be prepended to field 3 and seven spaces will be appended to the value of field 60.</P>
+<P>You can programatically configure the MessageFactory to return newly created messages with the current date (field 7) and a trace number or message ID (field 11). For the message ID you will need a TraceNumberGenerator. The framework offers a very simple implementation that uses an in-memory sequence, but you can implement your own generator using a database sequence or some other means.</p>
+
+<h3>Parsing guides</h3>
+<P>Parsing ISO8583 messages is usually the most cumbersome part of the whole protocol implementation. j8583 offers an easy way to parse messages, by defining a parsing guide, which defines what fields are to be expected in a messages, and what types and lengths they will have. <B>NOTE:</B> When the MessageFactory parses a message, it will only expect the fields defined in the guide for that message type; if a field not defined in the message guide is included in the message it will not be parsed correctly. However, if a field that is defined in the guide is not included in the message, it is simply skipped. So it's better to define all fields whose type and length you know for your implementation.</P>
+<P>A parsing guide looks like this. Suppose you want to read messages of type 210 and that you are expecting fields 3, 4, 7, 11, 32, 37, 38, 39, 41 and 60:</P>
+
+<p><pre><code>
+  &lt;parse type="210"&gt;
+    &lt;field num="3" type="NUMERIC" length="6" /&gt;
+    &lt;field num="4" type="AMOUNT" /&gt;
+    &lt;field num="7" type="DATE10" /&gt;
+    &lt;field num="11" type="NUMERIC" length="6" /&gt;
+    &lt;field num="32" type="LLVAR" /&gt;
+    &lt;field num="37" type="NUMERIC" length="12" /&gt;
+    &lt;field num="38" type="NUMERIC" length="6" /&gt;
+    &lt;field num="39" type="NUMERIC" length="2" /&gt;
+    &lt;field num="41" type="ALPHA" length="16" /&gt;
+    &lt;field num="60" type="ALPHA" length="40" /&gt;
+  &lt;/parse&gt;
+</code></pre></p>
+<P>Field 38 is usually the confirmation code and it is usually only sent when field 39 (the result code) has a value of 00. The message bitmap will be used to determine what messages from the guide are in the message.</p>
+<a href="http://sourceforge.net"><img src="http://sflogo.sourceforge.net/sflogo.php?group_id=194767&amp;type=7" width="210" height="62" border="0" alt="SourceForge.net Logo" /></a>
+
+</body></html>
