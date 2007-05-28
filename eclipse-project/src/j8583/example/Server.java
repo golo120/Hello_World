@@ -57,6 +57,9 @@ public class Server extends Thread {
 		int count = 0;
 		byte[] lenbuf = new byte[2];
 		try {
+			//For high volume apps you will be better off only reading the stream in this thread
+			//and then using another thread to parse the buffers and process the requests
+			//Otherwise the network buffer might fill up and you can miss a request.
 			while (socket != null && socket.isConnected() && isAlive() && !isInterrupted()) {
 				if (socket.getInputStream().read(lenbuf) == 2) {
 					int size = ((lenbuf[0] & 0xff) << 8) | (lenbuf[1] & 0xff);

@@ -216,6 +216,11 @@ public class MessageFactory {
 		}
 	}
 
+	/** Returns the ISO header used for the specified type. */
+	public String getIsoHeader(int type) {
+		return isoHeaders.get(type);
+	}
+
 	/** Sets a message template for a specified message type. When new messages of that type
 	 * are created, they will have the same values as the template.
 	 * @param type The message type.

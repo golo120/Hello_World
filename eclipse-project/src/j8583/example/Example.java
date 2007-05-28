@@ -26,6 +26,11 @@ import com.solab.iso8583.MessageFactory;
 import com.solab.iso8583.impl.SimpleTraceGenerator;
 import com.solab.iso8583.parse.ConfigParser;
 
+/** This little example program creates a message factory out of a XML config file,
+ * creates a new message, and parses a couple of message from a text file.
+ * 
+ * @author Enrique Zamudio
+ */
 public class Example {
 
 	public static void print(IsoMessage m) {

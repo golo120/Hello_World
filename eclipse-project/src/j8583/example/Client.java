@@ -62,6 +62,9 @@ public class Client extends Thread {
 	public void run() {
 		byte[] lenbuf = new byte[2];
 		try {
+			//For high volume apps you will be better off only reading the stream in one thread
+			//and then using another thread to parse the buffers and process the responses
+			//Otherwise the network buffer might fill up and you can miss a message.
 			while (sock != null && sock.isConnected() && !isInterrupted()) {
 				sock.getInputStream().read(lenbuf);
 				int size = ((lenbuf[0] & 0xff) << 8) | (lenbuf[1] & 0xff);
@@ -69,7 +72,10 @@ public class Client extends Thread {
 				//We're not expecting ETX in this case
 				if (sock.getInputStream().read(buf) == size) {
 					try {
-						IsoMessage resp = mfact.parseMessage(buf, 12);
+						//We'll use this header length as a reference.
+						//In practice, ISO headers for any message type are the same length.
+						String respHeader = mfact.getIsoHeader(0x200);
+						IsoMessage resp = mfact.parseMessage(buf, respHeader == null ? 12 : respHeader.length());
 						log.debug("Read response " + resp.getField(11) + " conf " + resp.getField(38) + ": " + new String(buf));
 						pending.remove(resp.getField(11).toString());
 					} catch (ParseException ex) {

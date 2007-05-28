@@ -106,6 +106,7 @@ public class FieldParseInfo {
 			cal.set(Calendar.SECOND, ((buf[pos + 4] - 48) * 10) + buf[pos + 5] - 48);
 			return new IsoValue<Date>(type, cal.getTime());
 		}
+		//TODO should we warn?
 		return null;
 	}
 
