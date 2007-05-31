@@ -221,11 +221,25 @@ public class MessageFactory {
 		return isoHeaders.get(type);
 	}
 
+	/** Adds a message template to the factory. If there was a template for the same
+	 * message type as the new one, it is overwritten. */
+	public void addMessageTemplate(IsoMessage templ) {
+		if (templ != null) {
+			typeTemplates.put(templ.getType(), templ);
+		}
+	}
+
+	/** Removes the message template for the specified type. */
+	public void removeMessageTemplate(int type) {
+		typeTemplates.remove(type);
+	}
+
 	/** Sets a message template for a specified message type. When new messages of that type
 	 * are created, they will have the same values as the template.
 	 * @param type The message type.
 	 * @param templ The message from which fields should be copied, or NULL to remove the
-	 * template for this message type. */
+	 * template for this message type.
+	 * @deprecated Use addMessageTemplate(IsoMessage) and removeMessageTemplate(int) instead of this. */
 	public void setMessageTemplate(int type, IsoMessage templ) {
 		if (templ == null) {
 			typeTemplates.remove(type);

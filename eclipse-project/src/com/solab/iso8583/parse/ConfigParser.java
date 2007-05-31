@@ -147,7 +147,7 @@ public class ConfigParser {
 				String v = f.getChildNodes().item(0).getNodeValue();
 				m.setValue(num, v, itype, length);
 			}
-			mfact.setMessageTemplate(type, m);
+			mfact.addMessageTemplate(m);
 		}
 
 		//Read the parsing guides

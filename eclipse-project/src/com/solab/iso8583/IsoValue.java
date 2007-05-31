@@ -50,6 +50,11 @@ public class IsoValue<T> implements Cloneable {
 		this.value = value;
 		if (type == IsoType.LLVAR || type == IsoType.LLLVAR) {
 			length = value.toString().length();
+			if (t == IsoType.LLVAR && length > 99) {
+				throw new IllegalArgumentException("LLVAR can only hold values up to 99 chars");
+			} else if (t == IsoType.LLLVAR && length > 999) {
+				throw new IllegalArgumentException("LLLVAR can only hold values up to 999 chars");
+			}
 		} else {
 			length = type.getLength();
 		}
@@ -65,6 +70,11 @@ public class IsoValue<T> implements Cloneable {
 			throw new IllegalArgumentException("Length must be greater than zero");
 		} else if (t == IsoType.LLVAR || t == IsoType.LLLVAR) {
 			length = val.toString().length();
+			if (t == IsoType.LLVAR && length > 99) {
+				throw new IllegalArgumentException("LLVAR can only hold values up to 99 chars");
+			} else if (t == IsoType.LLLVAR && length > 999) {
+				throw new IllegalArgumentException("LLLVAR can only hold values up to 999 chars");
+			}
 		}
 	}
 
@@ -129,23 +139,45 @@ public class IsoValue<T> implements Cloneable {
 
 	/** Writes the formatted value to a stream, with the length header
 	 * if it's a variable length type. */
-	public void write(OutputStream outs) throws IOException {
-		String v = toString();
+	public void write(OutputStream outs, boolean binary) throws IOException {
 		if (type == IsoType.LLLVAR || type == IsoType.LLVAR) {
-			length = v.length();
-			if (length > 100) {
-				outs.write((length / 100) + 48);
-			} else if (type == IsoType.LLLVAR) {
-				outs.write(48);
-			}
-			if (length >= 10) {
-				outs.write(((length % 100) / 10) + 48);
+			if (binary) {
+				if (type == IsoType.LLLVAR) {
+					outs.write(length / 100);
+				}
+				outs.write((((length % 100) / 10) << 4) | (length % 10));
 			} else {
-				outs.write(48);
+				if (type == IsoType.LLLVAR) {
+					outs.write((length / 100) + 48);
+				}
+				if (length >= 10) {
+					outs.write(((length % 100) / 10) + 48);
+				} else {
+					outs.write(48);
+				}
+				outs.write((length % 10) + 48);
 			}
-			outs.write((length % 10) + 48);
 		}
-		outs.write(v.getBytes());
+		if (binary) {
+			byte[] buf = null;
+			if (type == IsoType.NUMERIC) {
+				buf = new byte[(length / 2) + (length % 2)];
+			} else if (type == IsoType.AMOUNT) {
+				buf = new byte[6];
+			} else if (type == IsoType.DATE10 || type == IsoType.DATE4 || type == IsoType.DATE_EXP || type == IsoType.TIME) {
+				buf = new byte[length / 2];
+			}
+			toBcd(toString(), buf);
+			outs.write(buf);
+			return;
+		}
+		outs.write(toString().getBytes());
+	}
+
+	/** Encode the value as BCD and put it in the buffer. The buffer must be big enough
+	 * to store the digits in the original value. */
+	private void toBcd(String value, byte[] buf) {
+		//TODO encode as BCD
 	}
 
 }

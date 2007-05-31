@@ -200,9 +200,9 @@ public class IsoMessage {
     			}
     			pos++;
     			if (pos == 8) {
+    				bout.write(b);
     				pos = 0;
     				b = 0;
-    				bout.write(b);
     			}
     		}
     	} else {
@@ -225,7 +225,7 @@ public class IsoMessage {
     	//Fields
     	for (Integer i : keys) {
     		IsoValue v = fields.get(i);
-    		v.write(bout);
+    		v.write(bout, binary);
     	}
     	if (lengthBytes > 0) {
     		int l = bout.size();
