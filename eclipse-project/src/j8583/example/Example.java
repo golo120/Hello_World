@@ -18,11 +18,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 package j8583.example;
 
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.math.BigDecimal;
+import java.util.Date;
 
 import com.solab.iso8583.IsoMessage;
+import com.solab.iso8583.IsoType;
 import com.solab.iso8583.MessageFactory;
 import com.solab.iso8583.impl.SimpleTraceGenerator;
 import com.solab.iso8583.parse.ConfigParser;
@@ -60,9 +64,24 @@ public class Example {
 		System.out.println("NEW MESSAGE");
 		IsoMessage m = mfact.newMessage(0x200);
 		m.setBinary(true);
+		m.setValue(4, new BigDecimal("501.25"), IsoType.AMOUNT, 0);
+		m.setValue(15, new Date(), IsoType.DATE4, 0);
+		m.setValue(37, 12345678, IsoType.NUMERIC, 12);
+		m.setValue(41, "TEST-TERMINAL", IsoType.ALPHA, 16);
 		FileOutputStream fout = new FileOutputStream("/tmp/iso.bin");
 		m.write(fout, 2);
 		fout.close();
+		print(m);
+		System.out.println("PARSE BINARY FROM FILE");
+		byte[] buf = new byte[2];
+		FileInputStream fin = new FileInputStream("/tmp/iso.bin");
+		fin.read(buf);
+		int len = ((buf[0] & 0xff) << 4) | (buf[1] & 0xff);
+		buf = new byte[len];
+		fin.read(buf);
+		fin.close();
+		mfact.setUseBinaryMessages(true);
+		m = mfact.parseMessage(buf, mfact.getIsoHeader(0x200).length());
 		print(m);
 	}
 

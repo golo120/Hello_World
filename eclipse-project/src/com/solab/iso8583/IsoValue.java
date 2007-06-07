@@ -20,6 +20,7 @@ package com.solab.iso8583;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.util.Date;
 
 /** Represents a value that is stored in a field inside an ISO8583 message.
@@ -102,7 +103,9 @@ public class IsoValue<T> implements Cloneable {
 			return "ISOValue<null>";
 		}
 		if (type == IsoType.NUMERIC || type == IsoType.AMOUNT) {
-			if (value instanceof Number) {
+			if (type == IsoType.AMOUNT) {
+				return type.format((BigDecimal)value, 12);
+			} else if (value instanceof Number) {
 				return type.format(((Number)value).longValue(), length);
 			} else {
 				return type.format(value.toString(), length);

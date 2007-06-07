@@ -42,7 +42,6 @@
 	<field num="7" type="DATE10" />
 	<field num="11" type="NUMERIC" length="6" />
 	<field num="12" type="TIME" />
-	<field num="12" type="TIME" />
 	<field num="13" type="DATE4" />
 	<field num="15" type="DATE4" />
 	<field num="17" type="DATE4" />

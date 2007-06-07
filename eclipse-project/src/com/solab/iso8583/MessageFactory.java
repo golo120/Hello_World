@@ -145,35 +145,63 @@ public class MessageFactory {
 	 * @param isoHeaderLength The expected length of the ISO header, after which the message type
 	 * and the rest of the message must come. */
 	public IsoMessage parseMessage(byte[] buf, int isoHeaderLength) throws ParseException {
-		//TODO it only parses ASCII messages for now
 		IsoMessage m = new IsoMessage(isoHeaderLength > 0 ? new String(buf, 0, isoHeaderLength) : null);
-		int type = ((buf[isoHeaderLength] - 48) << 12)
+		//TODO it only parses ASCII messages for now
+		int type = 0;
+		if (useBinary) {
+			type = ((buf[isoHeaderLength] & 0xff) << 8) | (buf[isoHeaderLength + 1] & 0xff);
+		} else {
+			type = ((buf[isoHeaderLength] - 48) << 12)
 			| ((buf[isoHeaderLength + 1] - 48) << 8)
 			| ((buf[isoHeaderLength + 2] - 48) << 4)
 			| (buf[isoHeaderLength + 3] - 48);
+		}
 		m.setType(type);
 		//Parse the bitmap (primary first)
 		BitSet bs = new BitSet(64);
 		int pos = 0;
-		for (int i = isoHeaderLength + 4; i < isoHeaderLength + 20; i++) {
-			int hex = Integer.parseInt(new String(buf, i, 1), 16);
-			bs.set(pos++, (hex & 8) > 0);
-			bs.set(pos++, (hex & 4) > 0);
-			bs.set(pos++, (hex & 2) > 0);
-			bs.set(pos++, (hex & 1) > 0);
-		}
-		//Check for secondary bitmap and parse it if necessary
-		if (bs.get(0)) {
-			for (int i = isoHeaderLength + 20; i < isoHeaderLength + 36; i++) {
+		if (useBinary) {
+			for (int i = isoHeaderLength + 2; i < isoHeaderLength + 10; i++) {
+				int bit = 128;
+				for (int b = 0; b < 8; b++) {
+					bs.set(pos++, (buf[i] & bit) != 0);
+					bit >>= 1;
+				}
+			}
+			//Check for secondary bitmap and parse if necessary
+			if (bs.get(0)) {
+				for (int i = isoHeaderLength + 10; i < isoHeaderLength + 18; i++) {
+					int bit = 128;
+					for (int b = 0; b < 8; b++) {
+						bs.set(pos++, (buf[i] & bit) != 0);
+						bit >>= 1;
+					}
+				}
+				pos = 18 + isoHeaderLength;
+			} else {
+				pos = 10 + isoHeaderLength;
+			}
+		} else {
+			for (int i = isoHeaderLength + 4; i < isoHeaderLength + 20; i++) {
 				int hex = Integer.parseInt(new String(buf, i, 1), 16);
 				bs.set(pos++, (hex & 8) > 0);
 				bs.set(pos++, (hex & 4) > 0);
 				bs.set(pos++, (hex & 2) > 0);
 				bs.set(pos++, (hex & 1) > 0);
 			}
-			pos = 36 + isoHeaderLength;
-		} else {
-			pos = 20 + isoHeaderLength;
+			//Check for secondary bitmap and parse it if necessary
+			if (bs.get(0)) {
+				for (int i = isoHeaderLength + 20; i < isoHeaderLength + 36; i++) {
+					int hex = Integer.parseInt(new String(buf, i, 1), 16);
+					bs.set(pos++, (hex & 8) > 0);
+					bs.set(pos++, (hex & 4) > 0);
+					bs.set(pos++, (hex & 2) > 0);
+					bs.set(pos++, (hex & 1) > 0);
+				}
+				pos = 36 + isoHeaderLength;
+			} else {
+				pos = 20 + isoHeaderLength;
+			}
 		}
 		//Parse each field
 		Map<Integer, FieldParseInfo> parseGuide = parseMap.get(type);
@@ -181,13 +209,20 @@ public class MessageFactory {
 		for (Integer i : index) {
 			FieldParseInfo fpi = parseGuide.get(i);
 			if (bs.get(i - 1)) {
-				IsoValue val = fpi.parse(buf, pos);
+				IsoValue val = useBinary ? fpi.parseBinary(buf, pos) : fpi.parse(buf, pos);
+				if (val != null)
+				System.out.println("campo " + i + ": " + val);
 				m.setField(i, val);
-				pos += val.getLength();
+				if (useBinary && !(val.getType() == IsoType.ALPHA || val.getType() == IsoType.LLVAR
+						|| val.getType() == IsoType.LLLVAR)) {
+					pos += (val.getLength() / 2) + (val.getLength() % 2);
+				} else {
+					pos += val.getLength();
+				}
 				if (val.getType() == IsoType.LLVAR) {
-					pos += 2;
+					pos += useBinary ? 1 : 2;
 				} else if (val.getType() == IsoType.LLLVAR) {
-					pos += 3;
+					pos += useBinary ? 2 : 3;
 				}
 			}
 		}

@@ -151,7 +151,7 @@ public enum IsoType {
 	public String format(BigDecimal value, int length) {
 		if (this == AMOUNT) {
 			String v = new DecimalFormat("0000000000.00").format(value);
-			return v.substring(0, 10) + v.substring(10);
+			return v.substring(0, 10) + v.substring(11);
 		} else if (this == NUMERIC) {
 			return format(value.longValue(), length);
 		} else if (this == ALPHA || this == LLVAR || this == LLLVAR) {
