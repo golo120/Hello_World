@@ -18,6 +18,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 package j8583.example;
 
+import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 
@@ -37,7 +38,7 @@ public class Example {
 		System.out.println("TYPE: " + Integer.toHexString(m.getType()));
 		for (int i = 2; i < 128; i++) {
 			if (m.hasField(i)) {
-				System.out.println("F " + i + ": " + m.getObjectValue(i) + " -> '" + m.getField(i).toString() + "'");
+				System.out.println("F " + i + " (" + m.getField(i).getType() + "): " + m.getObjectValue(i) + " -> '" + m.getField(i).toString() + "'");
 			}
 		}
 	}
@@ -54,10 +55,14 @@ public class Example {
 			line = reader.readLine();
 		}
 		reader.close();
-		
+
 		//Create a new message
 		System.out.println("NEW MESSAGE");
 		IsoMessage m = mfact.newMessage(0x200);
+		m.setBinary(true);
+		FileOutputStream fout = new FileOutputStream("/tmp/iso.bin");
+		m.write(fout, 2);
+		fout.close();
 		print(m);
 	}
 

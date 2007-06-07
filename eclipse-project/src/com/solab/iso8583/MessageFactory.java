@@ -60,9 +60,22 @@ public class MessageFactory {
 	private TraceNumberGenerator traceGen;
 	/** The ISO header to be included in each message type. */
 	private Map<Integer, String> isoHeaders = new HashMap<Integer, String>();
-	/** Indicates if the current should be set on new messages (field 7). */
+	/** Indicates if the current date should be set on new messages (field 7). */
 	private boolean setDate;
+	/** Indicates if the factory should create binary messages and also parse binary messages. */
+	private boolean useBinary;
 	private int etx = -1;
+
+	/** Tells the receiver to create and parse binary messages if the flag is true.
+	 * Default is false, that is, create and parse ASCII messages. */
+	public void setUseBinaryMessages(boolean flag) {
+		useBinary = flag;
+	}
+	/** Returns true is the factory is set to create and parse binary messages,
+	 * false if it uses ASCII messages. Default is false. */
+	public boolean getUseBinaryMessages() {
+		return useBinary;
+	}
 
 	/** Sets the ETX character to be sent at the end of the message. This is optional and the
 	 * default is -1, which means nothing should be sent as terminator.
@@ -72,12 +85,14 @@ public class MessageFactory {
 	}
 
 	/** Creates a new message of the specified type, with optional trace and date values as well
-	 * as any other values specified in a message template.
+	 * as any other values specified in a message template. If the factory is set to use binary
+	 * messages, then the returned message will be written using binary coding.
 	 * @param type The message type, for example 0x200, 0x400, etc. */
 	public IsoMessage newMessage(int type) {
 		IsoMessage m = new IsoMessage(isoHeaders.get(type));
 		m.setType(type);
 		m.setEtx(etx);
+		m.setBinary(useBinary);
 
 		//Copy the values from the template
 		IsoMessage templ = typeTemplates.get(type);
@@ -103,6 +118,7 @@ public class MessageFactory {
 	 * @param request An ISO8583 message with a request type (ending in 00). */
 	public IsoMessage createResponse(IsoMessage request) {
 		IsoMessage resp = new IsoMessage(isoHeaders.get(request.getType() + 16));
+		resp.setBinary(request.isBinary());
 		resp.setType(request.getType() + 16);
 		resp.setEtx(etx);
 		//Copy the values from the template
@@ -123,11 +139,13 @@ public class MessageFactory {
 	}
 
 	/** Creates a new message instance from the buffer, which must contain a valid ISO8583
-	 * message.
+	 * message. If the factory is set to use binary messages then it will try to parse
+	 * a binary message.
 	 * @param buf The byte buffer containing the message. Must not include the length header.
 	 * @param isoHeaderLength The expected length of the ISO header, after which the message type
 	 * and the rest of the message must come. */
 	public IsoMessage parseMessage(byte[] buf, int isoHeaderLength) throws ParseException {
+		//TODO it only parses ASCII messages for now
 		IsoMessage m = new IsoMessage(isoHeaderLength > 0 ? new String(buf, 0, isoHeaderLength) : null);
 		int type = ((buf[isoHeaderLength] - 48) << 12)
 			| ((buf[isoHeaderLength + 1] - 48) << 8)

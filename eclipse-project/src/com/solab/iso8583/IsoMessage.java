@@ -192,16 +192,16 @@ public class IsoMessage {
     	}
     	//Write bitmap to stream
     	if (binary) {
-    		int pos = 0;
+    		int pos = 128;
     		int b = 0;
     		for (int i = 0; i < bs.size(); i++) {
     			if (bs.get(i)) {
-    				b |= 1 << pos;
+    				b |= pos;
     			}
-    			pos++;
-    			if (pos == 8) {
+    			pos >>= 1;
+    			if (pos == 0) {
     				bout.write(b);
-    				pos = 0;
+    				pos = 128;
     				b = 0;
     			}
     		}

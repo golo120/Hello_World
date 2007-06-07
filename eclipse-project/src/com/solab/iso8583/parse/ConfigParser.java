@@ -136,6 +136,7 @@ public class ConfigParser {
 			}
 			NodeList fields = elem.getElementsByTagName("field");
 			IsoMessage m = new IsoMessage();
+			m.setType(type);
 			for (int j = 0; j < fields.getLength(); j++) {
 				Element f = (Element)fields.item(j);
 				int num = Integer.parseInt(f.getAttribute("num"));

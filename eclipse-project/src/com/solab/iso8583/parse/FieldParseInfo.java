@@ -40,6 +40,9 @@ public class FieldParseInfo {
 	 * @param t The ISO type to be parsed.
 	 * @param len The length of the data to be read (useful only for ALPHA and NUMERIC types). */
 	public FieldParseInfo(IsoType t, int len) {
+		if (t == null) {
+			throw new IllegalArgumentException("IsoType cannot be null");
+		}
 		type = t;
 		length = len;
 	}
@@ -106,7 +109,6 @@ public class FieldParseInfo {
 			cal.set(Calendar.SECOND, ((buf[pos + 4] - 48) * 10) + buf[pos + 5] - 48);
 			return new IsoValue<Date>(type, cal.getTime());
 		}
-		//TODO should we warn?
 		return null;
 	}
 

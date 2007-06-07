@@ -143,10 +143,12 @@ public class IsoValue<T> implements Cloneable {
 		if (type == IsoType.LLLVAR || type == IsoType.LLVAR) {
 			if (binary) {
 				if (type == IsoType.LLLVAR) {
-					outs.write(length / 100);
+					outs.write(length / 100); //00 to 09 automatically in BCD
 				}
+				//BCD encode the rest of the length
 				outs.write((((length % 100) / 10) << 4) | (length % 10));
 			} else {
+				//write the length in ASCII
 				if (type == IsoType.LLLVAR) {
 					outs.write((length / 100) + 48);
 				}
@@ -157,8 +159,8 @@ public class IsoValue<T> implements Cloneable {
 				}
 				outs.write((length % 10) + 48);
 			}
-		}
-		if (binary) {
+		} else if (binary) {
+			//numeric types in binary are coded like this
 			byte[] buf = null;
 			if (type == IsoType.NUMERIC) {
 				buf = new byte[(length / 2) + (length % 2)];
@@ -167,17 +169,35 @@ public class IsoValue<T> implements Cloneable {
 			} else if (type == IsoType.DATE10 || type == IsoType.DATE4 || type == IsoType.DATE_EXP || type == IsoType.TIME) {
 				buf = new byte[length / 2];
 			}
-			toBcd(toString(), buf);
-			outs.write(buf);
-			return;
+			//Encode in BCD if it's one of these types
+			if (buf != null) {
+				toBcd(toString(), buf);
+				outs.write(buf);
+				return;
+			}
 		}
+		//Just write the value as text
 		outs.write(toString().getBytes());
 	}
 
 	/** Encode the value as BCD and put it in the buffer. The buffer must be big enough
-	 * to store the digits in the original value. */
+	 * to store the digits in the original value (half the length of the string). */
 	private void toBcd(String value, byte[] buf) {
-		//TODO encode as BCD
+		int charpos = 0; //char where we start
+		int bufpos = 0;
+		if (value.length() % 2 == 1) {
+			//for odd lengths we encode just the first digit in the first byte
+			buf[0] = (byte)(value.charAt(0) - 48);
+			charpos = 1;
+			bufpos = 1;
+		}
+		//encode the rest of the string
+		while (charpos < value.length()) {
+			buf[bufpos] = (byte)(((value.charAt(charpos) - 48) << 4)
+					| (value.charAt(charpos + 1) - 48));
+			charpos += 2;
+			bufpos++;
+		}
 	}
 
 }

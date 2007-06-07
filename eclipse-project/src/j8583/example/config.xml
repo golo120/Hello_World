@@ -20,7 +20,7 @@
 	<field num="49" type="ALPHA" length="3">484</field>
 	<field num="60" type="LLLVAR">B456PRO1+000</field>
 	<field num="61" type="LLLVAR">        1234P</field>
-	<field num="100" type="LLVAR">456</field>
+	<field num="100" type="LLVAR">999</field>
 	<field num="102" type="LLVAR">ABCD</field>
 </template>
 
