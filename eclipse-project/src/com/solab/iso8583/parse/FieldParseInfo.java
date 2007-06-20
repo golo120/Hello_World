@@ -85,6 +85,9 @@ public class FieldParseInfo {
 			cal.set(Calendar.HOUR_OF_DAY, ((buf[pos + 4] - 48) * 10) + buf[pos + 5] - 48);
 			cal.set(Calendar.MINUTE, ((buf[pos + 6] - 48) * 10) + buf[pos + 7] - 48);
 			cal.set(Calendar.SECOND, ((buf[pos + 8] - 48) * 10) + buf[pos + 9] - 48);
+			if (cal.getTime().after(new Date())) {
+				cal.add(Calendar.YEAR, -1);
+			}
 			return new IsoValue<Date>(type, cal.getTime());
 		} else if (type == IsoType.DATE4) {
 			Calendar cal = Calendar.getInstance();
@@ -94,14 +97,18 @@ public class FieldParseInfo {
 			//Set the month in the date
 			cal.set(Calendar.MONTH, ((buf[pos] - 48) * 10) + buf[pos + 1] - 49);
 			cal.set(Calendar.DATE, ((buf[pos + 2] - 48) * 10) + buf[pos + 3] - 48);
+			if (cal.getTime().after(new Date())) {
+				cal.add(Calendar.YEAR, -1);
+			}
 			return new IsoValue<Date>(type, cal.getTime());
 		} else if (type == IsoType.DATE_EXP) {
 			Calendar cal = Calendar.getInstance();
 			cal.set(Calendar.HOUR, 0);
 			cal.set(Calendar.MINUTE, 0);
 			cal.set(Calendar.SECOND, 0);
+			cal.set(Calendar.DATE, 1);
 			//Set the month in the date
-			cal.set(Calendar.YEAR, ((cal.get(Calendar.YEAR) % 100) * 100)
+			cal.set(Calendar.YEAR, cal.get(Calendar.YEAR) - (cal.get(Calendar.YEAR) % 100)
 					+ ((buf[pos] - 48) * 10) + buf[pos + 1] - 48);
 			cal.set(Calendar.MONTH, ((buf[pos + 2] - 48) * 10) + buf[pos + 3] - 49);
 			return new IsoValue<Date>(type, cal.getTime());
@@ -187,6 +194,9 @@ public class FieldParseInfo {
 				cal.set(Calendar.HOUR_OF_DAY, tens[2]);
 				cal.set(Calendar.MINUTE, tens[3]);
 				cal.set(Calendar.SECOND, tens[4]);
+				if (cal.getTime().after(new Date())) {
+					cal.add(Calendar.YEAR, -1);
+				}
 				return new IsoValue<Date>(type, cal.getTime());
 			} else if (type == IsoType.DATE4) {
 				cal.set(Calendar.HOUR, 0);
@@ -195,14 +205,19 @@ public class FieldParseInfo {
 				//Set the month in the date
 				cal.set(Calendar.MONTH, tens[0] - 1);
 				cal.set(Calendar.DATE, tens[1]);
+				if (cal.getTime().after(new Date())) {
+					cal.add(Calendar.YEAR, -1);
+				}
 				return new IsoValue<Date>(type, cal.getTime());
 			} else if (type == IsoType.DATE_EXP) {
 				cal.set(Calendar.HOUR, 0);
 				cal.set(Calendar.MINUTE, 0);
 				cal.set(Calendar.SECOND, 0);
+				cal.set(Calendar.DATE, 1);
 				//Set the month in the date
-				cal.set(Calendar.YEAR, ((cal.get(Calendar.YEAR) % 100) * 100) + tens[0]);
-				cal.set(Calendar.MONTH, tens[1]);
+				cal.set(Calendar.YEAR, cal.get(Calendar.YEAR)
+						- (cal.get(Calendar.YEAR) % 100) + tens[0]);
+				cal.set(Calendar.MONTH, tens[1] - 1);
 				return new IsoValue<Date>(type, cal.getTime());
 			} else if (type == IsoType.TIME) {
 				cal.set(Calendar.HOUR_OF_DAY, tens[0]);

@@ -65,7 +65,9 @@ public class Example {
 		IsoMessage m = mfact.newMessage(0x200);
 		m.setBinary(true);
 		m.setValue(4, new BigDecimal("501.25"), IsoType.AMOUNT, 0);
+		m.setValue(12, new Date(), IsoType.TIME, 0);
 		m.setValue(15, new Date(), IsoType.DATE4, 0);
+		m.setValue(17, new Date(), IsoType.DATE_EXP, 0);
 		m.setValue(37, 12345678, IsoType.NUMERIC, 12);
 		m.setValue(41, "TEST-TERMINAL", IsoType.ALPHA, 16);
 		FileOutputStream fout = new FileOutputStream("/tmp/iso.bin");
