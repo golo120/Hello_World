@@ -210,8 +210,6 @@ public class MessageFactory {
 			FieldParseInfo fpi = parseGuide.get(i);
 			if (bs.get(i - 1)) {
 				IsoValue val = useBinary ? fpi.parseBinary(buf, pos) : fpi.parse(buf, pos);
-				if (val != null)
-				System.out.println("campo " + i + ": " + val);
 				m.setField(i, val);
 				if (useBinary && !(val.getType() == IsoType.ALPHA || val.getType() == IsoType.LLVAR
 						|| val.getType() == IsoType.LLLVAR)) {

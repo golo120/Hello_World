@@ -13,20 +13,19 @@
 </target>
 
 <target name="javadoc">
-<mkdir dir="docs/api" />
-<javadoc access="protected" author="true"
-	classpath="eclipse-project/lib/log4j-1.2.14.jar:eclipse-project/lib/commons-logging-1.1.jar"
-	destdir="docs/api" doctitle="j8583 Framework API Documentation"
-	nodeprecated="false" nodeprecatedlist="false" noindex="false"
-	nonavbar="false" notree="false"
-	packagenames="com.solab.iso8583.impl,com.solab.iso8583,com.solab.iso8583.parse,j8583.example"
-	source="1.5" sourcepath="eclipse-project/src"
-	splitindex="true" use="true" version="true">
-<link href="http://jakarta.apache.org/commons/logging/apidocs/"/>
-<link href="http://java.sun.com/j2se/1.5.0/docs/api/"/>
-<link href="http://logging.apache.org/log4j/docs/api/"/>
-</javadoc>
-
+	<mkdir dir="docs/api" />
+	<javadoc access="protected" author="true"
+			classpath="eclipse-project/lib/log4j-1.2.14.jar:eclipse-project/lib/commons-logging-1.1.jar"
+			destdir="docs/api" doctitle="j8583 Framework API Documentation"
+			nodeprecated="false" nodeprecatedlist="false" noindex="false"
+			nonavbar="false" notree="false"
+			packagenames="com.solab.iso8583.impl,com.solab.iso8583,com.solab.iso8583.parse,j8583.example"
+			source="1.5" sourcepath="eclipse-project/src"
+			splitindex="true" use="true" version="true">
+		<link href="http://jakarta.apache.org/commons/logging/apidocs/"/>
+		<link href="http://java.sun.com/j2se/1.5.0/docs/api/"/>
+		<link href="http://logging.apache.org/log4j/docs/api/"/>
+	</javadoc>
 </target>
 
 <target name="pack" depends="build">
@@ -34,7 +33,7 @@
 	<jar jarfile="j8583.jar" index="true">
 		<fileset dir="eclipse-project/bin" includes="com/**/*.class" />
 	</jar>
-	<jar jarfile="example.jar" index="true">
+	<jar jarfile="example/example.jar" index="true">
 		<fileset dir="eclipse-project/bin" includes="j8583/example/*.class" />
 	</jar>
 </target>

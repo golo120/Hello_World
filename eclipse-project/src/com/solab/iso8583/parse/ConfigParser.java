@@ -104,6 +104,7 @@ public class ConfigParser {
 			return;
 		} catch (SAXException ex) {
 			log.error("Parsing XML configuration", ex);
+			return;
 		}
 		final Element root = doc.getDocumentElement();
 
