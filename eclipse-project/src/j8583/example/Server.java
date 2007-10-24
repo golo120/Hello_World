@@ -73,10 +73,9 @@ public class Server extends Thread {
 				}
 			}
 		} catch (IOException ex) {
-			System.out.println("Exception occurred...");
-			ex.printStackTrace();
+			log.error("Exception occurred...", ex);
 		}
-		log.debug("Exiting after reading " + count + " requests");
+		log.debug(String.format("Exiting after reading %d requests", count));
 		try {
 			socket.close();
 		} catch (IOException ex) {}
@@ -94,7 +93,7 @@ public class Server extends Thread {
 
 		public void run() {
 			try {
-				log.debug("Parsing incoming: " + new String(msg));
+				log.debug(String.format("Parsing incoming: '%s'", new String(msg)));
 				IsoMessage incoming = mfact.parseMessage(msg, 12);
 				//Create a response
 				IsoMessage response = mfact.createResponse(incoming);
@@ -121,7 +120,7 @@ public class Server extends Thread {
 		log.info("Waiting for connections...");
 		while (true) {
 			Socket sock = server.accept();
-			log.info("New connection from " + sock.getInetAddress() + ":" + sock.getPort());
+			log.info(String.format("New connection from %s:%d", sock.getInetAddress(), sock.getPort()));
 			new Server(sock).start();
 		}
 	}

@@ -75,8 +75,10 @@ public class Client extends Thread {
 						//We'll use this header length as a reference.
 						//In practice, ISO headers for any message type are the same length.
 						String respHeader = mfact.getIsoHeader(0x200);
-						IsoMessage resp = mfact.parseMessage(buf, respHeader == null ? 12 : respHeader.length());
-						log.debug("Read response " + resp.getField(11) + " conf " + resp.getField(38) + ": " + new String(buf));
+						IsoMessage resp = mfact.parseMessage(buf,
+							respHeader == null ? 12 : respHeader.length());
+						log.debug(String.format("Read response %s conf %s: %s",
+							resp.getField(11), resp.getField(38), new String(buf)));
 						pending.remove(resp.getField(11).toString());
 					} catch (ParseException ex) {
 						log.error("Parsing response", ex);

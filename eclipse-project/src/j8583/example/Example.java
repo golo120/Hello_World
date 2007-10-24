@@ -39,10 +39,11 @@ import com.solab.iso8583.parse.ConfigParser;
 public class Example {
 
 	public static void print(IsoMessage m) {
-		System.out.println("TYPE: " + Integer.toHexString(m.getType()));
+		System.out.printf("TYPE: %04x\n", m.getType());
 		for (int i = 2; i < 128; i++) {
 			if (m.hasField(i)) {
-				System.out.println("F " + i + " (" + m.getField(i).getType() + "): " + m.getObjectValue(i) + " -> '" + m.getField(i).toString() + "'");
+				System.out.printf("F %3d(%s): %s -> '%s'\n", i, m.getField(i).getType(),
+					m.getObjectValue(i), m.getField(i).toString());
 			}
 		}
 	}
