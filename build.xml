@@ -5,7 +5,7 @@
 <target name="build">
 	<mkdir dir="eclipse-project/bin" />
 	<javac srcdir="eclipse-project/src" destdir="eclipse-project/bin"
-			includes="com/**/*.java">
+			includes="**/*.java">
 		<classpath>
 			<fileset dir="eclipse-project/lib" includes="*.jar" />
 		</classpath>

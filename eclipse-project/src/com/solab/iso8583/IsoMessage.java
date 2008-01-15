@@ -21,6 +21,7 @@ package com.solab.iso8583;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
@@ -159,9 +160,88 @@ public class IsoMessage {
     	if (lengthBytes > 4) {
     		throw new IllegalArgumentException("The length header can have at most 4 bytes");
     	}
+    	byte[] data = writeInternal();
+
+    	if (lengthBytes > 0) {
+    		int l = data.length;
+    		if (etx > -1) {
+    			l++;
+    		}
+    		byte[] buf = new byte[lengthBytes];
+    		int pos = 0;
+    		if (lengthBytes == 4) {
+    			buf[0] = (byte)((l & 0xff000000) >> 24);
+    			pos++;
+    		}
+    		if (lengthBytes > 2) {
+    			buf[pos] = (byte)((l & 0xff0000) >> 16);
+    			pos++;
+    		}
+    		if (lengthBytes > 1) {
+    			buf[pos] = (byte)((l & 0xff00) >> 8);
+    			pos++;
+    		}
+    		buf[pos] = (byte)(l & 0xff);
+    		outs.write(buf);
+    	}
+    	outs.write(data);
+    	//ETX
+    	if (etx > -1) {
+    		outs.write(etx);
+    	}
+    	outs.flush();
+    }
+
+    /** Creates and returns a ByteBuffer with the data of the message, including the length header.
+     * The returned buffer is ready to be written to a Channel. */
+    public ByteBuffer writeToBuffer(int lengthBytes) {
+    	if (lengthBytes > 4) {
+    		throw new IllegalArgumentException("The length header can have at most 4 bytes");
+    	}
+
+    	byte[] data = writeInternal();
+    	ByteBuffer buf = ByteBuffer.allocate(lengthBytes + data.length + (etx > -1 ? 1 : 0));
+    	if (lengthBytes > 0) {
+    		int l = data.length;
+    		if (etx > -1) {
+    			l++;
+    		}
+    		byte[] bbuf = new byte[lengthBytes];
+    		int pos = 0;
+    		if (lengthBytes == 4) {
+    			bbuf[0] = (byte)((l & 0xff000000) >> 24);
+    			pos++;
+    		}
+    		if (lengthBytes > 2) {
+    			bbuf[pos] = (byte)((l & 0xff0000) >> 16);
+    			pos++;
+    		}
+    		if (lengthBytes > 1) {
+    			bbuf[pos] = (byte)((l & 0xff00) >> 8);
+    			pos++;
+    		}
+    		bbuf[pos] = (byte)(l & 0xff);
+    		buf.put(bbuf);
+    	}
+    	buf.put(data);
+    	//ETX
+    	if (etx > -1) {
+    		buf.put((byte)etx);
+    	}
+    	buf.flip();
+    	return buf;
+    }
+
+    /** Writes the message to a memory buffer and returns it. The message does not include
+     * the ETX character or the header length. */
+    protected byte[] writeInternal() {
     	ByteArrayOutputStream bout = new ByteArrayOutputStream();
     	if (isoHeader != null) {
-    		bout.write(isoHeader.getBytes());
+    		try {
+    			bout.write(isoHeader.getBytes());
+    		} catch (IOException ex) {
+    			//should never happen, writing to a ByteArrayOutputStream
+    		}
     	}
     	//Message Type
     	if (binary) {
@@ -172,7 +252,11 @@ public class IsoMessage {
     		if (x.length() < 4) {
     			bout.write(48);
     		}
-    		bout.write(x.getBytes());
+    		try {
+    			bout.write(x.getBytes());
+    		} catch (IOException ex) {
+    			//should never happen, writing to a ByteArrayOutputStream
+    		}
     	}
 
     	//Bitmap
@@ -225,36 +309,13 @@ public class IsoMessage {
     	//Fields
     	for (Integer i : keys) {
     		IsoValue v = fields.get(i);
-    		v.write(bout, binary);
+    		try {
+    			v.write(bout, binary);
+    		} catch (IOException ex) {
+    			//should never happen, writing to a ByteArrayOutputStream
+    		}
     	}
-    	if (lengthBytes > 0) {
-    		int l = bout.size();
-    		if (etx > -1) {
-    			l++;
-    		}
-    		byte[] buf = new byte[lengthBytes];
-    		int pos = 0;
-    		if (lengthBytes == 4) {
-    			buf[0] = (byte)((l & 0xff000000) >> 24);
-    			pos++;
-    		}
-    		if (lengthBytes > 2) {
-    			buf[pos] = (byte)((l & 0xff0000) >> 16);
-    			pos++;
-    		}
-    		if (lengthBytes > 1) {
-    			buf[pos] = (byte)((l & 0xff00) >> 8);
-    			pos++;
-    		}
-    		buf[pos] = (byte)(l & 0xff);
-    		outs.write(buf);
-    	}
-    	bout.writeTo(outs);
-    	//ETX
-    	if (etx > -1) {
-    		outs.write(etx);
-    	}
-    	outs.flush();
+    	return bout.toByteArray();
     }
 
 }

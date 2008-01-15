@@ -39,7 +39,7 @@ import com.solab.iso8583.parse.ConfigParser;
  * 
  * @author Enrique Zamudio
  */
-public class Client extends Thread {
+public class Client implements Runnable {
 
 	private static final Log log = LogFactory.getLog(Client.class);
 
@@ -54,6 +54,7 @@ public class Client extends Thread {
 	private static ConcurrentHashMap<String, IsoMessage> pending = new ConcurrentHashMap<String, IsoMessage>();
 
 	private Socket sock;
+	private boolean done = false;
 
 	public Client(Socket socket) {
 		sock = socket;
@@ -65,7 +66,7 @@ public class Client extends Thread {
 			//For high volume apps you will be better off only reading the stream in one thread
 			//and then using another thread to parse the buffers and process the responses
 			//Otherwise the network buffer might fill up and you can miss a message.
-			while (sock != null && sock.isConnected() && !isInterrupted()) {
+			while (sock != null && sock.isConnected()) {
 				sock.getInputStream().read(lenbuf);
 				int size = ((lenbuf[0] & 0xff) << 8) | (lenbuf[1] & 0xff);
 				byte[] buf = new byte[size];
@@ -89,12 +90,31 @@ public class Client extends Thread {
 				}
 			}
 		} catch (IOException ex) {
-			log.error("Reading responses", ex);
+			if (done) {
+				log.info(String.format("Socket closed because we're done (%d pending)", pending.size()));
+			} else {
+				log.error(String.format("Reading responses, %d pending", pending.size()), ex);
+				try {
+					sock.close();
+				} catch (IOException ex2) {};
+			}
 		} finally {
-			try {
-				sock.close();
-			} catch (IOException ex) {};
+			if (sock != null) {
+				try {
+					sock.close();
+				} catch (IOException ex) {};
+			}
 		}
+	}
+
+	protected void stop() {
+		done = true;
+		try {
+			sock.close();
+		} catch (IOException ex) {
+			log.error("Couldn't close socket");
+		}
+		sock = null;
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -106,7 +126,8 @@ public class Client extends Thread {
 		log.debug("Connecting to server");
 		Socket sock = new Socket("localhost", 9999);
 		//Send 10 messages, then wait for the responses
-		Client reader = new Client(sock);
+		Client client = new Client(sock);
+		Thread reader = new Thread(client, "j8583-client");
 		reader.start();
 		for (int i = 0; i < 10; i++) {
 			IsoMessage req = mfact.newMessage(0x200);
@@ -119,15 +140,15 @@ public class Client extends Thread {
 			req.setValue(41, data[rng.nextInt(data.length)], IsoType.ALPHA, 16);
 			req.setValue(48, data[rng.nextInt(data.length)], IsoType.LLLVAR, 0);
 			pending.put(req.getField(11).toString(), req);
-			log.debug("Sending request " + req.getField(11));
+			log.debug(String.format("Sending request %s", req.getField(11)));
 			req.write(sock.getOutputStream(), 2);
 		}
 		log.debug("Waiting for responses");
 		while (pending.size() > 0 && sock.isConnected()) {
-			sleep(500);
+			Thread.sleep(500);
 		}
+		client.stop();
 		reader.interrupt();
-		sock.close();
 		log.debug("DONE.");
 	}
 

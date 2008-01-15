@@ -40,7 +40,7 @@ import com.solab.iso8583.parse.ConfigParser;
  * 
  * @author Enrique Zamudio
  */
-public class Server extends Thread {
+public class Server implements Runnable {
 
 	private static final Log log = LogFactory.getLog(Server.class);
 
@@ -60,7 +60,8 @@ public class Server extends Thread {
 			//For high volume apps you will be better off only reading the stream in this thread
 			//and then using another thread to parse the buffers and process the requests
 			//Otherwise the network buffer might fill up and you can miss a request.
-			while (socket != null && socket.isConnected() && isAlive() && !isInterrupted()) {
+			while (socket != null && socket.isConnected()
+					&& Thread.currentThread().isAlive() && !Thread.currentThread().isInterrupted()) {
 				if (socket.getInputStream().read(lenbuf) == 2) {
 					int size = ((lenbuf[0] & 0xff) << 8) | (lenbuf[1] & 0xff);
 					byte[] buf = new byte[size];
@@ -121,7 +122,8 @@ public class Server extends Thread {
 		while (true) {
 			Socket sock = server.accept();
 			log.info(String.format("New connection from %s:%d", sock.getInetAddress(), sock.getPort()));
-			new Server(sock).start();
+			new Thread(new Server(sock), "j8583-server").start();
 		}
 	}
+
 }
