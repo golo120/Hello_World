@@ -1,5 +1,7 @@
 <project name="j8583" default="all">
 
+<property name="j8583.release" value="1.2" />
+
 <target name="all" depends="build,pack" />
 
 <target name="build">
@@ -36,6 +38,24 @@
 	<jar jarfile="example/example.jar" index="true">
 		<fileset dir="eclipse-project/bin" includes="j8583/example/*.class" />
 	</jar>
+</target>
+
+<target name="release" depends="build">
+	<delete file="j8583-${j8583.release}.zip" />
+	<delete file="j8583-src-${j8583.release}.zip" />
+
+	<zip destfile="j8583-src-${j8583.release}.zip"
+			basedir="eclipse-project" includes="src/**">
+		<fileset dir="." includes="build.xml,example/*.sh" />
+	</zip>
+
+	<zip destfile="j8583-${j8583.release}.zip">
+		<fileset dir=".." includes="j8583/docs/**"
+			excludes="j8583/docs/site, j8583/docs/site/**" />
+		<fileset dir=".." includes="j8583/example/**" />
+		<fileset dir=".." includes="j8583/j8583.jar" />
+	</zip>
+
 </target>
 
 </project>

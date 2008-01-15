@@ -150,8 +150,8 @@ public class IsoMessage {
     /** Writes a message to a stream, after writing the specified number of bytes indicating
      * the message's length. The message will first be written to an internal memory stream
      * which will then be dumped into the specified stream. This method flushes the stream
-     * after the write. There are at most two write operations to the stream: one for the
-     * length header and the other one with the whole message.
+     * after the write. There are at most three write operations to the stream: one for the
+     * length header, one for the message, and the last one with for the ETX.
      * @param outs The stream to write the message to.
      * @param lengthBytes The size of the message length header. Valid ranges are 0 to 4.
      * @throws IllegalArgumentException if the specified length header is more than 4 bytes.
@@ -193,7 +193,7 @@ public class IsoMessage {
     }
 
     /** Creates and returns a ByteBuffer with the data of the message, including the length header.
-     * The returned buffer is ready to be written to a Channel. */
+     * The returned buffer is already flipped, so it is ready to be written to a Channel. */
     public ByteBuffer writeToBuffer(int lengthBytes) {
     	if (lengthBytes > 4) {
     		throw new IllegalArgumentException("The length header can have at most 4 bytes");
