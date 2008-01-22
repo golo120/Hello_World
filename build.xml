@@ -2,12 +2,22 @@
 
 <property name="j8583.release" value="1.2" />
 
-<target name="all" depends="build,pack" />
+<target name="all" depends="build,build14,pack" />
 
 <target name="build">
 	<mkdir dir="eclipse-project/bin" />
 	<javac srcdir="eclipse-project/src" destdir="eclipse-project/bin"
-			includes="**/*.java">
+			includes="**/*.java" target="1.5" source="1.5">
+		<classpath>
+			<fileset dir="eclipse-project/lib" includes="*.jar" />
+		</classpath>
+	</javac>
+</target>
+
+<target name="build14">
+	<mkdir dir="eclipse-project-jdk14/bin" />
+	<javac srcdir="eclipse-project-jdk14/src" destdir="eclipse-project-jdk14/bin"
+			includes="**/*.java" target="1.4" source="1.4">
 		<classpath>
 			<fileset dir="eclipse-project/lib" includes="*.jar" />
 		</classpath>
@@ -38,22 +48,41 @@
 	<jar jarfile="example/example.jar" index="true">
 		<fileset dir="eclipse-project/bin" includes="j8583/example/*.class" />
 	</jar>
+	<!-- new jars for 1.4 -->
+	<jar jarfile="j8583-jdk14.jar" index="true">
+		<fileset dir="eclipse-project-jdk14/bin" includes="com/**/*.class" />
+	</jar>
+	<jar jarfile="example/example-jdk14.jar" index="true">
+		<fileset dir="eclipse-project-jdk14/bin" includes="j8583/example/*.class" />
+	</jar>
 </target>
 
 <target name="release" depends="build">
 	<delete file="j8583-${j8583.release}.zip" />
 	<delete file="j8583-src-${j8583.release}.zip" />
+	<delete file="j8583-${j8583.release}-jdk14.zip" />
+	<delete file="j8583-src-${j8583.release}-jdk14.zip" />
 
 	<zip destfile="j8583-src-${j8583.release}.zip"
 			basedir="eclipse-project" includes="src/**">
 		<fileset dir="." includes="build.xml,example/*.sh" />
 	</zip>
+	<zip destfile="j8583-src-${j8583.release}-jdk14.zip"
+			basedir="eclipse-project-jdk14" includes="src/**">
+		<fileset dir="." includes="build.xml,example/*jdk14.sh" />
+	</zip>
 
 	<zip destfile="j8583-${j8583.release}.zip">
 		<fileset dir=".." includes="j8583/docs/**"
 			excludes="j8583/docs/site, j8583/docs/site/**" />
-		<fileset dir=".." includes="j8583/example/**" />
+		<fileset dir=".." includes="j8583/example/**" excludes="**/*jdk14*" />
 		<fileset dir=".." includes="j8583/j8583.jar" />
+	</zip>
+	<zip destfile="j8583-${j8583.release}-jdk14.zip">
+		<fileset dir=".." includes="j8583/docs/**"
+			excludes="j8583/docs/site, j8583/docs/site/**" />
+		<fileset dir=".." includes="j8583/example/*jdk14*" />
+		<fileset dir=".." includes="j8583/j8583-jdk14.jar" />
 	</zip>
 
 </target>
