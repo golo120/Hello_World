@@ -224,6 +224,7 @@ public class MessageFactory {
 				}
 			}
 		}
+		m.setBinary(useBinary);
 		return m;
 	}
 

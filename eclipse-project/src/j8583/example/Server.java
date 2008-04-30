@@ -102,7 +102,8 @@ public class Server implements Runnable {
 				response.setField(7, incoming.getField(7));
 				response.setValue(38, System.currentTimeMillis() % 1000000, IsoType.NUMERIC, 6);
 				response.setValue(39, 0, IsoType.NUMERIC, 2);
-				response.setValue(61, "Dynamic data generated at " + new Date(), IsoType.LLLVAR, 0);
+				response.setValue(61, String.format("Dynamic data generated on %1$tF at %1$tT", new Date()),
+					IsoType.LLLVAR, 0);
 				log.debug("Sending response conf " + response.getField(38));
 				response.write(sock.getOutputStream(), 2);
 			} catch (ParseException ex) {

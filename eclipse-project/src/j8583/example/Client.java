@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.Socket;
 import java.text.ParseException;
+import java.util.Date;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -135,7 +136,7 @@ public class Client implements Runnable {
 			req.setValue(12, req.getObjectValue(7), IsoType.TIME, 0);
 			req.setValue(13, req.getObjectValue(7), IsoType.DATE4, 0);
 			req.setValue(15, req.getObjectValue(7), IsoType.DATE4, 0);
-			req.setValue(17, req.getObjectValue(7), IsoType.DATE4, 0);
+			req.setValue(17, new Date(System.currentTimeMillis() + (86400*720)), IsoType.DATE_EXP, 0);
 			req.setValue(37, System.currentTimeMillis() % 1000000, IsoType.NUMERIC, 12);
 			req.setValue(41, data[rng.nextInt(data.length)], IsoType.ALPHA, 16);
 			req.setValue(48, data[rng.nextInt(data.length)], IsoType.LLLVAR, 0);
