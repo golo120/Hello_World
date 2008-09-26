@@ -177,6 +177,35 @@ public class ConfigParser {
 
 	}
 
+	/** Configures a MessageFactory using the default configuration file j8583.xml. This is useful
+	 * if you have a MessageFactory created using Spring for example. */
+	public void configureFromDefault(MessageFactory mfact) throws IOException {
+		if (MessageFactory.class.getClassLoader().getResource("j8583.xml") == null) {
+			log.warn("j8583.xml not found!");
+		} else {
+			configureFromClasspathConfig(mfact, "j8583.xml");
+		}
+	}
+
+	/** Configures a MessageFactory using the configuration file at the path specified (will be searched
+	 * within the classpath using the MessageFactory's ClassLoader). This is useful for configuring
+	 * Spring-bound instances of MessageFactory for example. */
+	public void configureFromClasspathConfig(MessageFactory mfact, String path) throws IOException {
+		InputStream ins = MessageFactory.class.getClassLoader().getResourceAsStream(path);
+		if (ins != null) {
+			if (log.isDebugEnabled()) {
+				log.debug("Parsing config from classpath file " + path);
+			}
+			try {
+				parse(mfact, ins);
+			} finally {
+				ins.close();
+			}
+		} else {
+			log.warn("File not found in classpath: " + path);
+		}
+	}
+
 	/** Parses a message type expressed as a hex string and returns the integer number.
 	 * For example, "0200" or "200" return the number 512 (0x200) */
 	private static int parseType(String type) throws IOException {

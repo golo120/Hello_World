@@ -68,7 +68,7 @@ public class IsoValue<T> implements Cloneable {
 		value = val;
 		length = len;
 		if (length == 0 && t.needsLength()) {
-			throw new IllegalArgumentException("Length must be greater than zero");
+			throw new IllegalArgumentException(String.format("Length must be greater than zero for type %s", t));
 		} else if (t == IsoType.LLVAR || t == IsoType.LLLVAR) {
 			length = val.toString().length();
 			if (t == IsoType.LLVAR && length > 99) {

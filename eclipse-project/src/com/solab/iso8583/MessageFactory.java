@@ -83,6 +83,9 @@ public class MessageFactory {
 	public void setEtx(int value) {
 		etx = value;
 	}
+	public int getEtx() {
+		return etx;
+	}
 
 	/** Creates a new message of the specified type, with optional trace and date values as well
 	 * as any other values specified in a message template. If the factory is set to use binary
@@ -286,18 +289,10 @@ public class MessageFactory {
 		typeTemplates.remove(type);
 	}
 
-	/** Sets a message template for a specified message type. When new messages of that type
-	 * are created, they will have the same values as the template.
-	 * @param type The message type.
-	 * @param templ The message from which fields should be copied, or NULL to remove the
-	 * template for this message type.
-	 * @deprecated Use addMessageTemplate(IsoMessage) and removeMessageTemplate(int) instead of this. */
-	public void setMessageTemplate(int type, IsoMessage templ) {
-		if (templ == null) {
-			typeTemplates.remove(type);
-		} else {
-			typeTemplates.put(type, templ);
-		}
+	/** Returns the template for the specified message type. This allows templates to be modified
+	 * programatically. */
+	public IsoMessage getMessageTemplate(int type) {
+		return typeTemplates.get(type);
 	}
 
 	/** Sets a map with the fields that are to be expected when parsing a certain type of
