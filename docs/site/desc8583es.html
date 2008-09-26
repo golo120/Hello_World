@@ -1,0 +1,228 @@
+<html>
+<link rel="stylesheet" href="http://ezcontent.sourceforge.net/estilo.css" />
+<head><title>j8583 Framework</title></head>
+<body>
+
+<div align="center" class="mtext"><a href="/">Home</a> | <a href="http://sf.net/projects/j8583/">Project Page</a>
+| <a href="http://sourceforge.net/project/platformdownload.php?group_id=194767">Download</a>
+| <a href="desc8583en.html">Protocol description</a> (Spanish)
+| <a href="config.html">Configuration</a> | <a href="/api/">API documentation</a></div>
+
+<h1>Breve explicaci&oacute;n del protocolo ISO8583</h1>
+<p>La idea de este protocolo es poder transmitir informaci&oacute;n para procesamiento de pagos a trav&eacute;s de sockets de TCP/IP. Un mensaje de ISO8583 puede tener hasta 63 o 127 campos y se procesa de manera lineal (es decir, se va leyendo el mensaje en el orden en que fue recibido).</p>
+
+<h2>Formato del mensaje</h2>
+<P>Un mensaje simple de ISO8583 viene de la siguiente forma:</p>
+<ul>
+<li>Tipo de mensaje: Indica si es petici&oacute;n o respuesta, y de qu&eacute; tipo de transacci&oacute;n se trata.</li>
+<li>Bitmap: El bitmap indica los campos que vienen en el mensaje. Como su nombre lo indica, se trata de una serie de 64 bits, donde cada bit corresponde a un campo del mensaje. De esta manera se sabe qu&eacute; campos hay que leer.</li>
+<li>Campos: Despu&eacute;s del bitmap, vienen los campos definidos en el mismo. Hay distintos tipos de campos y en el mensaje no se indica el tipo de campo que viene, eso se tiene que definir previamente en la especificaci&oacute;n del mensaje (hay un cierto est&aacute;ndar para ciertos campos pero algunas implementaciones varian por lo que es importante revisar siempre la especificaci&oacute;n para la implementaci&oacute;n concreta de ISO8583 en la que se est&aacute; trabajando para saber de qu&eacute; tipo es cada campo que se va a manejar).</li>
+</ul>
+<P>El primer campo es un campo especial y corresponde a un bitmap secundario. Si el primer bit del bitmap primario (es decir el bitmap que siempre viene) est&aacute; encendido, entonces despu&eacute;s del bitmap primario viene un bitmap secundario, es decir, otros 64 bits que permiten incluir campos del 65 al 128.</P>
+
+<h2>Tipos de campo</h2>
+<P>A partir del segundo campo ya son solamente campos est&aacute;ndar, y pueden tener los siguientes tipos:</P>
+<dl>
+<dt>Alfanum&eacute;rico</dt><dd>Consiste en letras y n&uacute;meros y tiene una longitud fija, previamente establecida en la especificaci&oacute;n del mensaje. Si el contenido es menor a la longitud del campo, se debe rellenar con espacios a la derecha.</dd>
+<dt>Num&eacute;rico</dt><dd>Consiste solamente en n&uacute;meros y tiene una longitud fija, previamente establecida en la especificaci&oacute;n del mensaje. Si el contenido es menor a la longitud del campo, se debe rellenar con ceros a la izquierda.</dd>
+<dt>LLVAR</dt><dd>Es un campo alfanum&eacute;rico de longitud variable. Contiene un peque&ntilde;o encabezado de dos posiciones al principio, indicando la longitud del resto del campo. Se deben leer estas dos posiciones y despu&eacute;s se deben leer tantas posiciones como se indique ah&iacute;. Puede tener una longitud de 0 a 99 caracteres.</dd>
+<dt>LLLVAR</dt><dd>Es un campo alfanum&eacute;rico de longitud variable. Contiene un peque&ntilde;o encabezado de tres posiciones al principio, indicando la longitud del resto del campo; se deben leer estas tres posiciones y luego tantas posiciones como se indique ah&iacute;. Puede tener una longitud de 0 a 999 caracteres.</dd>
+<dt>Fecha/Hora</dt><dd>Hay tres tipos de fecha distintos: Uno es de 10 posiciones en formato MMDDHHmmss, otro es de 4 posiciones en formato AAMM (&uacute;til para fechas de expiraci&oacute;n de tarjetas de cr&eacute;dito por ejemplo), otro es de 4 posiciones en formato MMDD. Otro es de 6 posiciones y contiene solamente la hora en formato HHmmss</dd>
+<dt>Monto</dt><dd>Es un campo num&eacute;rico de 12 posiciones y expresa una cantidad monetaria en centavos. Por ejemplo $15.00 se expresa como <code>000000001500</code>.</dd>
+<dt></dt><dd></dd>
+</dl>
+
+<h2>Tipos de mensaje</h2>
+<P>Los tipos de petici&oacute;n m&aacute;s comunes son:</P>
+<TABLE border=0>
+<tr><td align="right">0200</td>
+	<td>Petici&oacute;n de abono, venta, recarga, cargo a tarjeta de cr&eacute;dito, etc.</td></tr>
+<tr><td align="right">0210</td>
+	<td>Respuesta de abono, venta, recarga, cargo a tarjeta de cr&eacute;dito, etc.</td></tr>
+<tr><td align="right">0400</td>
+	<td>Petici&oacute;n de reverso o anulaci&oacute;n de abono, venta, recarga, etc</td></tr>
+<tr><td align="right">0410</td>
+	<td>Petici&oacute;n de reverso o anulaci&oacute;n de abono, venta, recarga, etc</td></tr>
+<tr><td align="right">0600</td>
+	<td>Consulta de datos</td></tr>
+<tr><td align="right">0610</td>
+	<td>Respuesta a consulta de datos</td></tr>
+<tr><td align="right">0800</td>
+	<td>Mensaje de eco</td></tr>
+<tr><td align="right">0810</td>
+	<td>Respuesta a mensaje de eco</td></tr>
+</TABLE>
+
+<h2>Codificaci&oacute;n</h2>
+<P>Los mensajes ISO8583 se pueden codificar en ASCII o binario; el m&aacute;s com&uacute;n es ASCII, en el cual el tipo de mensaje mide 4 bytes porque se mandan los caracteres de texto como se indica anteriormente, por ejemplo para una recarga se envian los bytes 48, 50, 48, 48 que corresponden al texto "0200". En caso de mensaje binario se env&iacute;an dos bytes, el byte 2 y un byte 0, ya que en hexadecimal el primer byte es 0x02 y el siguiente es 0x00, juntos son 0x0200.</P>
+<P>En el caso de ASCII, el bitmap se env&iacute;a como 16 caracteres que contienen el bitmap codificado en hexadecimal, es decir, cada 4 bits vienen como 1 d&iacute;gito hexadecimal, por ejemplo si el mensaje incluye los campos 1 y 3 pero no los campos 2 ni 4, entonces los primeros 4 bits con 1010 y eso en hexadecimal se expresa como A. En caso de mensaje binario se env&iacute;an 8 bytes sin codificar de ninguna manera.</P>
+<P>Los campos num&eacute;ricos y alfanum&eacute;ricos en ASCII miden tantos bytes como posiciones contengan; es decir un campo num&eacute;rico de 6 posiciones medir&aacute; 6 bytes y contendr&aacute; el n&uacute;mero en texto; es decir, el numero 000012 por ejemplo vendr&aacute; en ASCII como los caracteres ASCII 48, 48, 48, 48, 49, 50.</P>
+<P>Para los campos num&eacute;ricos en codificaci&oacute;n binaria se usa BCD (Binary Coded Digits), la cual consiste en tomar dos d&iacute;gitos y pasarlos a hexadecimal, de manera que un byte puede contener dos d&iacute;gitos. Por ejemplo el n&uacute;mero 15 se transmite como el byte 0x15, el n&uacute;mero 8 se transmite como 0x08, el n&uacute;mero 128 se transmite como 0x0128 (dos bytes; 0x01 y 0x28). Por lo tanto la longitud en bytes es la mitad de la longitud en posiciones y siempre ser&aacute; par; si la longitud en posiciones es non, simplemente se ignora el primer d&iacute;gito que siempre ser&aacute; un 0.</P>
+<P>Los campos LLVAR y LLLVAR en ASCII tienen encabezados de dos y tres bytes respectivamente, indicando la longitud del resto del campo en texto. Un campo LLVAR o LLLVAR en ASCII que indique por ejemplo una longitud de 3 posiciones, tendr&aacute; un contenido de 3 bytes, m&aacute;s su encabezado. Por ejemplo un campo LLVAR con el texto "ABC" ser&aacute; codificado como la cadena "03ABC".</P>
+<P>Los campos LLVAR y LLLVAR en binario son un poco m&aacute;s complicados. El campo LLVAR tiene un encabezado de un solo byte que contiene la longitud codificada en BCD y posteriormente viene su contenido. Pero un campo LLLVAR tendr&aacute; un encabezado de 2 bytes, con la longitud codificada en BCD pero se debe ignorar el primer d&iacute;gito que siempre ser&aacute; 0.</P>
+<P>Los campos de fecha y monto, al ser num&eacute;ricos, se codifican como cualquier otro dato num&eacute;rico, es decir en ASCII un monto mide 12 bytes pero en binario mide 6 bytes porque viene codificado en BCD.</P>
+
+<h2>Encabezado ISO</h2>
+<P>En algunas ocasiones los mensajes deben incluir un encabezado que puede ir antes incluso del tipo de mensaje. La especificaci&oacute;n para la implementaci&oacute;n de la mensajer&iacute;a debe definir los encabezados, que pueden ser distintos por tipo de mensaje.</P>
+<P>Adicionalmente, es muy com&uacute;n que para la transmisi&oacute;n de datos se defina un encabezado binario de 2 o 4 bytes, en el cual se indica la longitud del mensaje que se debe leer. De esta manera se simplifica la lectura en un socket TCP, ya que se leen dos bytes, y despu&eacute;s se debe leer solamente tantos bytes como se indique en dicho encabezado. El orden de los bytes se debe incluir en la especificaci&oacute;n, aunque por lo general va primero el byte m&aacute;s significativo.</P>
+<P>En ocasiones se incluye tambi&eacute;n un terminador de mensaje, el cual puede estar incluido en la longitud del mensaje o no, dependiendo de la implementaci&oacute;n.</P>
+
+<h2>Ejemplos</h2>
+<P>A continuaci&oacute;n se presentan algunos ejemplos de mensajes ISO8583, junto con la definici&oacute;n en XML para usarse en el framework j8583. En este caso se usa codificaci&oacute;n en ASCII.</P>
+
+<P><code><pre><font color="#808080">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</font>
+<font color="#0000FF">&lt;!DOCTYPE j8583-config PUBLIC "-//J8583//DTD CONFIG 1.0//EN"
+	"http://j8583.sourceforge.net/j8583.dtd"&gt;</font>
+<font color="#0000FF">&lt;j8583-config&gt;</font>
+
+<font color="#808080">&lt;!-- These are the ISO headers to be prepended to the message types specified --&gt;</font>
+<font color="#0000FF">&lt;header type="0200"&gt;</font>ISO015000050<font color="#0000FF">&lt;/header&gt;</font>
+<font color="#0000FF">&lt;header type="0210"&gt;</font>ISO015000055<font color="#0000FF">&lt;/header&gt;</font>
+<font color="#0000FF">&lt;header type="0400"&gt;</font>ISO015000050<font color="#0000FF">&lt;/header&gt;</font>
+<font color="#0000FF">&lt;header type="0410"&gt;</font>ISO015000055<font color="#0000FF">&lt;/header&gt;</font>
+<font color="#0000FF">&lt;header type="0800"&gt;</font>ISO015000015<font color="#0000FF">&lt;/header&gt;</font>
+<font color="#0000FF">&lt;header type="0810"&gt;</font>ISO015000015<font color="#0000FF">&lt;/header&gt;</font>
+
+<font color="#808080">&lt;!-- The client example uses this to create requests --&gt;</font>
+<font color="#0000FF">&lt;template type="0200"&gt;</font>
+	<font color="#0000FF">&lt;field num="3" type="NUMERIC" length="6"&gt;</font>650000<font color="#0000FF">&lt;/field&gt;</font>
+	<font color="#0000FF">&lt;field num="32" type="LLVAR"&gt;</font>456<font color="#0000FF">&lt;/field&gt;</font>
+	<font color="#0000FF">&lt;field num="35" type="LLVAR"&gt;</font>4591700012340000=<font color="#0000FF">&lt;/field&gt;</font>
+	<font color="#0000FF">&lt;field num="43" type="ALPHA" length="40"&gt;</font>SOLABTEST             TEST-3       DF MX<font color="#0000FF"&lt;/field&gt;</font>
+	<font color="#0000FF">&lt;field num="49" type="ALPHA" length="3"&gt;</font>484<font color="#0000FF">&lt;/field&gt;</font>
+	<font color="#0000FF">&lt;field num="60" type="LLLVAR"&gt;</font>B456PRO1+000<font color="#0000FF">&lt;/field&gt;</font>
+	<font color="#0000FF">&lt;field num="61" type="LLLVAR"&gt;</font>        1234P<font color="#0000FF">&lt;/field&gt;</font>
+	<font color="#0000FF">&lt;field num="100" type="LLVAR"&gt;</font>999<font color="#0000FF">&lt;/field&gt;</font>
+	<font color="#0000FF">&lt;field num="102" type="LLVAR"&gt;</font>ABCD<font color="#0000FF">&lt;/field&gt;</font>
+<font color="#0000FF">&lt;/template&gt;</font>
+
+<font color="#808080">&lt;!-- The server example uses this to create the responses
+	we only need a few fields because the rest are copied from the request --&gt;</font>
+<font color="#0000FF">&lt;template type="0210"&gt;</font>
+	<font color="#0000FF">&lt;field num="60" type="LLLVAR"&gt;</font>Fixed data from template<font color="#0000FF">&lt;/field&gt;</font>
+	<font color="#0000FF">&lt;field num="70" type="ALPHA" length="3"&gt;</font>ABC<font color="#0000FF">&lt;/field&gt;</font>
+	<font color="#0000FF">&lt;field num="90" type="ALPHA" length="42"&gt;</font>Field of length 42<font color="#0000FF">&lt;/field&gt;</font>
+	<font color="#0000FF">&lt;field num="100" type="LLVAR"&gt;</font>Fixed field<font color="#0000FF">&lt;/field&gt;</font>
+	<font color="#0000FF">&lt;field num="102" type="LLVAR"&gt;</font>Another fixed field<font color="#0000FF">&lt;/field&gt;</font>
+	<font color="#0000FF">&lt;field num="126" type="LLLVAR"&gt;</font>...and yet another fixed field.<font color="#0000FF">&lt;/field&gt;</font>
+<font color="#0000FF">&lt;/template&gt;</font>
+
+<font color="#808080">&lt;!-- The server example uses this to read the requests --&gt;</font>
+<font color="#0000FF">&lt;parse type="0200"&gt;</font>
+	<font color="#0000FF">&lt;field num="3" type="NUMERIC" length="6" /&gt;</font>
+	<font color="#0000FF">&lt;field num="4" type="AMOUNT" /&gt;</font>
+	<font color="#0000FF">&lt;field num="7" type="DATE10" /&gt;</font>
+	<font color="#0000FF">&lt;field num="11" type="NUMERIC" length="6" /&gt;</font>
+	<font color="#0000FF">&lt;field num="12" type="TIME" /&gt;</font>
+	<font color="#0000FF">&lt;field num="13" type="DATE4" /&gt;</font>
+	<font color="#0000FF">&lt;field num="15" type="DATE4" /&gt;</font>
+	<font color="#0000FF">&lt;field num="17" type="DATE_EXP" /&gt;</font>
+	<font color="#0000FF">&lt;field num="32" type="LLVAR" /&gt;</font>
+	<font color="#0000FF">&lt;field num="35" type="LLVAR" /&gt;</font>
+	<font color="#0000FF">&lt;field num="37" type="NUMERIC" length="12" /&gt;</font>
+	<font color="#0000FF">&lt;field num="41" type="ALPHA" length="16" /&gt;</font>
+	<font color="#0000FF">&lt;field num="43" type="ALPHA" length="40" /&gt;</font>
+	<font color="#0000FF">&lt;field num="48" type="LLLVAR" /&gt;</font>
+	<font color="#0000FF">&lt;field num="49" type="ALPHA" length="3" /&gt;</font>
+	<font color="#0000FF">&lt;field num="60" type="LLLVAR" /&gt;</font>
+	<font color="#0000FF">&lt;field num="61" type="LLLVAR" /&gt;</font>
+	<font color="#0000FF">&lt;field num="100" type="LLVAR" /&gt;</font>
+	<font color="#0000FF">&lt;field num="102" type="LLVAR" /&gt;</font>
+<font color="#0000FF">&lt;/parse&gt;</font>
+
+<font color="#808080">&lt;!-- The client example uses this to read the responses --&gt;</font>
+<font color="#0000FF">&lt;parse type="0210"&gt;</font>
+	<font color="#0000FF">&lt;field num="3" type="NUMERIC" length="6" /&gt;</font>
+	<font color="#0000FF">&lt;field num="4" type="AMOUNT" /&gt;</font>
+	<font color="#0000FF">&lt;field num="7" type="DATE10" /&gt;</font>
+	<font color="#0000FF">&lt;field num="11" type="NUMERIC" length="6" /&gt;</font>
+	<font color="#0000FF">&lt;field num="12" type="TIME" /&gt;</font>
+	<font color="#0000FF">&lt;field num="13" type="DATE4" /&gt;</font>
+	<font color="#0000FF">&lt;field num="15" type="DATE4" /&gt;</font>
+	<font color="#0000FF">&lt;field num="17" type="DATE_EXP" /&gt;</font>
+	<font color="#0000FF">&lt;field num="32" type="LLVAR" /&gt;</font>
+	<font color="#0000FF">&lt;field num="35" type="LLVAR" /&gt;</font>
+	<font color="#0000FF">&lt;field num="37" type="NUMERIC" length="12" /&gt;</font>
+	<font color="#0000FF">&lt;field num="38" type="NUMERIC" length="6" /&gt;</font>
+	<font color="#0000FF">&lt;field num="39" type="NUMERIC" length="2" /&gt;</font>
+	<font color="#0000FF">&lt;field num="41" type="ALPHA" length="16" /&gt;</font>
+	<font color="#0000FF">&lt;field num="43" type="ALPHA" length="40" /&gt;</font>
+	<font color="#0000FF">&lt;field num="48" type="LLLVAR" /&gt;</font>
+	<font color="#0000FF">&lt;field num="49" type="ALPHA" length="3" /&gt;</font>
+	<font color="#0000FF">&lt;field num="60" type="LLLVAR" /&gt;</font>
+	<font color="#0000FF">&lt;field num="61" type="LLLVAR" /&gt;</font>
+	<font color="#0000FF">&lt;field num="70" type="ALPHA" length="3" /&gt;</font>
+	<font color="#0000FF">&lt;field num="90" type="ALPHA" length="42" /&gt;</font>
+	<font color="#0000FF">&lt;field num="100" type="LLVAR" /&gt;</font>
+	<font color="#0000FF">&lt;field num="102" type="LLVAR" /&gt;</font>
+	<font color="#0000FF">&lt;field num="126" type="LLLVAR" /&gt;</font>
+<font color="#0000FF">&lt;/parse&gt;</font>
+
+<font color="#0000FF">&lt;/j8583-config&gt;</font></pre></code></P>
+
+<h3>Ejemplo 1</h3>
+<P>Petici&oacute;n:<br>
+<code>ISO0150000500200B23A800128A180180000000014000000650000000000002050042813271000057813271004280428042803456174591700012340000=000000230579A1B2C3D4E5      SOLABTEST             TEST-3       DF MX010abcdefghij484012B456PRO1+000013        1234P0399904ABCD</code>
+<br>
+<table border="0">
+<tr><th>Campo</th><th>Valor</th></tr>
+<tr><td>Encabezado ISO</td><td><code>ISO015000050</code></td></tr>
+<tr><td>Tipo de mensaje</td><td><code>0200</code></td></tr>
+<tr><td>Bitmap Primario</td><td><code>B23A800128A18018</code></td></tr>
+<tr><td>Bitmap secundario</td><td><code>0000000014000000</code></td></tr>
+<tr><td>3 (proc code)</td><td><code>650000</code></td></tr>
+<tr><td>4 (monto)</td><td><code>000000002050</code> ($20.50)</td></tr>
+<tr><td>7 (fecha)</td><td><code>0428132710</code> (Abril 28 13:27:10)</td></tr>
+<tr><td>11 (trace)</td><td><code>000578</code></td></tr>
+<tr><td>12 (hora)</td><td><code>132710</code> (13:27:10)</td></tr>
+<tr><td>13 (fecha expedicion)</td><td><code>0428</code> (28 de abril)</td></tr>
+<tr><td>15 (fecha lim)</td><td><code>0428</code> (28 de abril)</td></tr>
+<tr><td>17 (expiracion)</td><td><code>0804</code> (Abril 2008)</td></tr>
+<tr><td>32</td><td><code>456</code></td></tr>
+<tr><td>35</td><td><code>4591700012340000=</code></td></tr>
+<tr><td>37 (referencia)</td><td><code>000000230579</code></td></tr>
+<tr><td>41 (term id)</td><td><code>A1B2C3D4E5      </code></td></tr>
+<tr><td>43</td><td><code>SOLABTEST             TEST-3       DF MX</code></td></tr>
+<tr><td>48</td><td><code>abcdefghij</code></td></tr>
+<tr><td>49 (currency)</td><td><code>484</code></td></tr>
+<tr><td>60</td><td><code>B456PRO1+000</code></td></tr>
+<tr><td>61</td><td><code>        1234P</code></td></tr>
+<tr><td>100</td><td><code>999</code></td></tr>
+<tr><td>102</td><td><code>ABCD</code></td></tr>
+</table>
+</P>
+<P>Respuesta:<br>
+<code>ISO0150000550210B23A80012EA180180400004014000004650000000000002050042813271000057813271004280428060403456174591700012340000=00000023057923104300A1B2C3D4E5      SOLABTEST             TEST-3       DF MX010abcdefghij484012B456PRO1+000054Dynamic data generated at Mon Apr 28 13:27:11 CDT 2008ABCField of length 42                        0399904ABCD031...and yet another fixed field.</code>
+<table border="0">
+<tr><th>Campo</th><th>Valor</th></tr>
+<tr><td>Encabezado ISO</td><td><code>ISO015000055</code></td></tr>
+<tr><td>Tipo de mensaje</td><td><code>0210</code></td></tr>
+<tr><td>Bitmap Primario</td><td><code>B23A80012EA18018</code></td></tr>
+<tr><td>Bitmap secundario</td><td><code>0400004014000004</code></td></tr>
+<tr><td>3 (proc code)</td><td><code>650000</code></td></tr>
+<tr><td>4 (monto)</td><td><code>000000002050</code> ($20.50)</td></tr>
+<tr><td>7 (fecha)</td><td><code>0428132710</code> (Abril 28 13:27:10)</td></tr>
+<tr><td>11 (trace)</td><td><code>000578</code></td></tr>
+<tr><td>12 (hora)</td><td><code>132710</code> (13:27:10)</td></tr>
+<tr><td>13 (fecha expedicion)</td><td><code>0428</code> (28 de abril)</td></tr>
+<tr><td>15 (fecha lim)</td><td><code>0428</code> (28 de abril)</td></tr>
+<tr><td>17 (expiracion)</td><td><code>0804</code> (Abril 2008)</td></tr>
+<tr><td>32</td><td><code>456</code></td></tr>
+<tr><td>35</td><td><code>4591700012340000=</code></td></tr>
+<tr><td>37 (referencia)</td><td><code>000000230579</code></td></tr>
+<tr><td>38 (num. confirmacion)</td><td><code>231043</code></td></tr>
+<tr><td>39 (result code)</td><td><code>00</code></td></tr>
+<tr><td>41 (term id)</td><td><code>A1B2C3D4E5      </code></td></tr>
+<tr><td>43</td><td><code>SOLABTEST             TEST-3       DF MX</code></td></tr>
+<tr><td>48</td><td><code>abcdefghij</code></td></tr>
+<tr><td>49 (currency)</td><td><code>484</code></td></tr>
+<tr><td>60</td><td><code>B456PRO1+000</code></td></tr>
+<tr><td>61</td><td><code>Dynamic data generated at Mon Apr 28 13:27:11 CDT 2008</code></td></tr>
+<tr><td>70</td><td><code>ABC</code></td></tr>
+<tr><td>90</td><td><code>Field of length 42                        </code></td></tr>
+<tr><td>100</td><td><code>999</code></td></tr>
+<tr><td>102</td><td><code>ABCD</code></td></tr>
+<tr><td>126</td><td><code>...and yet another fixed field.</code></td></tr>
+</table>
+</P>
+</body>

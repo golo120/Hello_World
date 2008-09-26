@@ -2,9 +2,15 @@
 <link rel="stylesheet" href="http://ezcontent.sourceforge.net/estilo.css" />
 <head><title>j8583 Framework</title></head>
 <body>
+<div align="center" class="mtext">Home | <a href="http://sf.net/projects/j8583/">Project Page</a>
+| <a href="http://sourceforge.net/project/platformdownload.php?group_id=194767">Download</a>
+| <a href="desc8583en.html">Protocol description</a> (<a href="desc8583es.html">Spanish</a>)
+| <a href="config.html">Configuration</a> | <a href="/api/">API documentation</a></div>
+
 <h1>Welcome to the j8583 Framework</h1>
 <P>This framework provides ISO8583 messaging utilities for Java 5. Its objective is to simplify as much as possible the creation and parsing of ISO8583 messages.</P>
 <P>The message format and protocol are somewhat complex and cumbersome. The definition is available <a href="http://www.iso.org/iso/en/CombinedQueryResult.CombinedQueryResult?queryString=8583">here</a> so we will not be getting into the protocol specification. This document and the framework are intended for people who are already familiar with this standard.</P>
+<P><B>UPDATE:</B> Due to popular demand, I have included a brief description of the protocol, both in <a href="desc8583en.html">English</a> and <a href="desc8583es.html">Spanish</a>.
 
 <h2>Download</h2>
 <P>You can <a href="http://sourceforge.net/project/platformdownload.php?group_id=194767">download the framework here</a>.</P>
@@ -14,7 +20,9 @@
 <P>Configuring j8583 is very easy. You can create a XML configuration file and place it in a file inside the classpath. The default is j8583.xml in the classpath root. The configuration file can contain definitions for ISO headers, message templates and parsing guides. The DTD is located <a href="http://j8583.sourceforge.net/j8583.dtd">here</a> if you want to take a look at it or use it with a XML editor.</P>
 <P>You use the ConfigParser to create a MessageFactory and configure it with a XML file. Once you have a MessageFactory you only need to specify whether you want it to set the date on newly created messages, and also set a TraceNumberGenerator to set the trace number for newly created messages.</p>
 <P>You can learn how to use the XML configuration <a href="config.html">here</a>.</P>
-<a href="http://sourceforge.net"><img src="http://sflogo.sourceforge.net/sflogo.php?group_id=194767&amp;type=7" width="210" height="62" border="0" alt="SourceForge.net Logo" /></a>
+<P>You can also check the online <a href="/api/">API Documentation</a>.
+<P><a href="desc8583es.html">Breve explicaci&oacute;n</a> del protocolo ISO-8583</p>
+<a href="http://sourceforge.net"><img src="http://sflogo.sourceforge.net/sflogo.php?group_id=194767&type=7" width="210" height="62" border="0" alt="SourceForge.net Logo" /></a>
 <div align="right"><i>&copy;2007 Enrique Zamudio L&oacute;pez</div>
 
 </body></html>
