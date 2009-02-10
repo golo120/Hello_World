@@ -48,7 +48,7 @@ import com.solab.iso8583.parse.FieldParseInfo;
  */
 public class MessageFactory {
 
-	protected static final Log log = LogFactory.getLog(MessageFactory.class);
+	protected final Log log = LogFactory.getLog(getClass());
 
 	/** This map stores the message template for each message type. */
 	private Map<Integer, IsoMessage> typeTemplates = new HashMap<Integer, IsoMessage>();
@@ -209,6 +209,18 @@ public class MessageFactory {
 		//Parse each field
 		Map<Integer, FieldParseInfo> parseGuide = parseMap.get(type);
 		List<Integer> index = parseOrder.get(type);
+		//First we check if the message contains fields not specified in the parsing template
+		boolean abandon = false;
+		for (int i = 0; i < bs.length(); i++) {
+			if (bs.get(i) && !index.contains(i+1)) {
+				log.warn(String.format("ISO8583 MessageFactory cannot parse field %d: unspecified in parsing guide", i));
+				abandon = true;
+			}
+		}
+		if (abandon) {
+			return m;
+		}
+		//Now we parse each field
 		for (Integer i : index) {
 			FieldParseInfo fpi = parseGuide.get(i);
 			if (bs.get(i - 1)) {
@@ -305,7 +317,7 @@ public class MessageFactory {
 		ArrayList<Integer> index = new ArrayList<Integer>();
 		index.addAll(map.keySet());
 		Collections.sort(index);
-		log.trace("Adding parse map for type " + Integer.toHexString(type) + " with fields " + index);
+		log.trace(String.format("ISO8583 MessageFactory adding parse map for type %04x with fields %s", type, index));
 		parseOrder.put(type, index);
 	}
 

@@ -150,7 +150,7 @@ public enum IsoType {
 	/** Formats the BigDecimal as an AMOUNT, NUMERIC, or a String. */
 	public String format(BigDecimal value, int length) {
 		if (this == AMOUNT) {
-			String v = new DecimalFormat("0000000000.00").format(value);
+			String v = new DecimalFormat(value.signum() >= 0 ? "0000000000.00" : "000000000.00").format(value);
 			return v.substring(0, 10) + v.substring(11);
 		} else if (this == NUMERIC) {
 			return format(value.longValue(), length);
