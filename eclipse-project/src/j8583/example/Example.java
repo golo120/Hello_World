@@ -78,8 +78,12 @@ public class Example {
 		System.out.println("PARSE BINARY FROM FILE");
 		byte[] buf = new byte[2];
 		FileInputStream fin = new FileInputStream("/tmp/iso.bin");
-		fin.read(buf);
-		int len = ((buf[0] & 0xff) << 4) | (buf[1] & 0xff);
+		if (fin.read(buf) != buf.length) {
+			System.out.println("ERROR!!! Leyendo encabezado de longitud en el mensaje");
+			return;
+		}
+		int len = ((buf[0] & 0xff) << 8) | (buf[1] & 0xff);
+		System.out.printf("Vamos a leer %d bytes (%02x%02x)%n", len, buf[0], buf[1]);
 		buf = new byte[len];
 		fin.read(buf);
 		fin.close();

@@ -211,9 +211,9 @@ public class MessageFactory {
 		List<Integer> index = parseOrder.get(type);
 		//First we check if the message contains fields not specified in the parsing template
 		boolean abandon = false;
-		for (int i = 0; i < bs.length(); i++) {
+		for (int i = 1; i < bs.length(); i++) {
 			if (bs.get(i) && !index.contains(i+1)) {
-				log.warn(String.format("ISO8583 MessageFactory cannot parse field %d: unspecified in parsing guide", i));
+				log.warn(String.format("ISO8583 MessageFactory cannot parse field %d: unspecified in parsing guide", i+1));
 				abandon = true;
 			}
 		}
