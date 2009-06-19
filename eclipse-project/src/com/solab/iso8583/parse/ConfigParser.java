@@ -179,7 +179,7 @@ public class ConfigParser {
 
 	/** Configures a MessageFactory using the default configuration file j8583.xml. This is useful
 	 * if you have a MessageFactory created using Spring for example. */
-	public void configureFromDefault(MessageFactory mfact) throws IOException {
+	public static void configureFromDefault(MessageFactory mfact) throws IOException {
 		if (MessageFactory.class.getClassLoader().getResource("j8583.xml") == null) {
 			log.warn("ISO8583 config file j8583.xml not found!");
 		} else {
@@ -190,7 +190,7 @@ public class ConfigParser {
 	/** Configures a MessageFactory using the configuration file at the path specified (will be searched
 	 * within the classpath using the MessageFactory's ClassLoader). This is useful for configuring
 	 * Spring-bound instances of MessageFactory for example. */
-	public void configureFromClasspathConfig(MessageFactory mfact, String path) throws IOException {
+	public static void configureFromClasspathConfig(MessageFactory mfact, String path) throws IOException {
 		InputStream ins = MessageFactory.class.getClassLoader().getResourceAsStream(path);
 		if (ins != null) {
 			if (log.isDebugEnabled()) {

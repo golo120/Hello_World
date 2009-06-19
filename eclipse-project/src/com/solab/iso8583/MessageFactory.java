@@ -18,6 +18,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 package com.solab.iso8583;
 
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -30,6 +31,7 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.solab.iso8583.parse.ConfigParser;
 import com.solab.iso8583.parse.FieldParseInfo;
 
 /** This class is used to create messages, either from scratch or from an existing String or byte
@@ -60,11 +62,38 @@ public class MessageFactory {
 	private TraceNumberGenerator traceGen;
 	/** The ISO header to be included in each message type. */
 	private Map<Integer, String> isoHeaders = new HashMap<Integer, String>();
+	/** A map for the custom field encoder/decoders, keyed by field number. */
+	private Map<Integer, CustomField<?>> customFields = new HashMap<Integer, CustomField<?>>();
 	/** Indicates if the current date should be set on new messages (field 7). */
 	private boolean setDate;
 	/** Indicates if the factory should create binary messages and also parse binary messages. */
 	private boolean useBinary;
 	private int etx = -1;
+
+	/** Specifies a map for custom field encoder/decoders. The keys are the field numbers. */
+	public void setCustomFields(Map<Integer, CustomField<?>> value) {
+		customFields = value;
+	}
+
+	/** Sets the CustomField encoder for the specified field number. */
+	public void setCustomField(int index, CustomField<?> value) {
+		customFields.put(index, value);
+	}
+	/** Returns a custom field encoder/decoder for the specified field number, if one is available. */
+	public CustomField<?> getCustomField(int index) {
+		return customFields.get(index);
+	}
+	/** Returns a custom field encoder/decoder for the specified field number, if one is available. */
+	public CustomField<?> getCustomField(Integer index) {
+		return customFields.get(index);
+	}
+
+	/** Tells the receiver to read the configuration at the specified path. This just calls
+	 * ConfigParser.configureFromClasspathConfig() with itself and the specified path at arguments,
+	 * but is really convenient in case the MessageFactory is being configured from within, say, Spring. */
+	public void setConfigPath(String path) throws IOException {
+		ConfigParser.configureFromClasspathConfig(this, path);
+	}
 
 	/** Tells the receiver to create and parse binary messages if the flag is true.
 	 * Default is false, that is, create and parse ASCII messages. */
@@ -185,30 +214,41 @@ public class MessageFactory {
 				pos = 10 + isoHeaderLength;
 			}
 		} else {
-			for (int i = isoHeaderLength + 4; i < isoHeaderLength + 20; i++) {
-				int hex = Integer.parseInt(new String(buf, i, 1), 16);
-				bs.set(pos++, (hex & 8) > 0);
-				bs.set(pos++, (hex & 4) > 0);
-				bs.set(pos++, (hex & 2) > 0);
-				bs.set(pos++, (hex & 1) > 0);
-			}
-			//Check for secondary bitmap and parse it if necessary
-			if (bs.get(0)) {
-				for (int i = isoHeaderLength + 20; i < isoHeaderLength + 36; i++) {
+			try {
+				for (int i = isoHeaderLength + 4; i < isoHeaderLength + 20; i++) {
 					int hex = Integer.parseInt(new String(buf, i, 1), 16);
 					bs.set(pos++, (hex & 8) > 0);
 					bs.set(pos++, (hex & 4) > 0);
 					bs.set(pos++, (hex & 2) > 0);
 					bs.set(pos++, (hex & 1) > 0);
 				}
-				pos = 36 + isoHeaderLength;
-			} else {
-				pos = 20 + isoHeaderLength;
+				//Check for secondary bitmap and parse it if necessary
+				if (bs.get(0)) {
+					for (int i = isoHeaderLength + 20; i < isoHeaderLength + 36; i++) {
+						int hex = Integer.parseInt(new String(buf, i, 1), 16);
+						bs.set(pos++, (hex & 8) > 0);
+						bs.set(pos++, (hex & 4) > 0);
+						bs.set(pos++, (hex & 2) > 0);
+						bs.set(pos++, (hex & 1) > 0);
+					}
+					pos = 36 + isoHeaderLength;
+				} else {
+					pos = 20 + isoHeaderLength;
+				}
+			} catch (NumberFormatException ex) {
+				ParseException _e = new ParseException("Invalid ISO8583 bitmap", pos);
+				_e.initCause(ex);
+				throw _e;
 			}
 		}
 		//Parse each field
 		Map<Integer, FieldParseInfo> parseGuide = parseMap.get(type);
 		List<Integer> index = parseOrder.get(type);
+		if (index == null) {
+			log.error(String.format("ISO8583 MessageFactory has no parsing guide for message type %04x [%s]",
+				type, new String(buf)));
+			return null;
+		}
 		//First we check if the message contains fields not specified in the parsing template
 		boolean abandon = false;
 		for (int i = 1; i < bs.length(); i++) {
@@ -224,7 +264,7 @@ public class MessageFactory {
 		for (Integer i : index) {
 			FieldParseInfo fpi = parseGuide.get(i);
 			if (bs.get(i - 1)) {
-				IsoValue val = useBinary ? fpi.parseBinary(buf, pos) : fpi.parse(buf, pos);
+				IsoValue<?> val = useBinary ? fpi.parseBinary(buf, pos, getCustomField(i)) : fpi.parse(buf, pos, getCustomField(i));
 				m.setField(i, val);
 				if (useBinary && !(val.getType() == IsoType.ALPHA || val.getType() == IsoType.LLVAR
 						|| val.getType() == IsoType.LLLVAR)) {

@@ -31,6 +31,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.solab.iso8583.IsoMessage;
 import com.solab.iso8583.IsoType;
+import com.solab.iso8583.IsoValue;
 import com.solab.iso8583.MessageFactory;
 import com.solab.iso8583.impl.SimpleTraceGenerator;
 import com.solab.iso8583.parse.ConfigParser;
@@ -82,6 +83,12 @@ public class Client implements Runnable {
 						log.debug(String.format("Read response %s conf %s: %s",
 							resp.getField(11), resp.getField(38), new String(buf)));
 						pending.remove(resp.getField(11).toString());
+						IsoValue<?> f48 = resp.getField(48);
+						if (f48 != null && f48.getValue() instanceof ProductData) {
+							ProductData v = (ProductData)f48.getValue();
+							log.debug(String.format("Field 48 encoded: '%s' pid:%s cat:%d",
+								f48, v.getProductId(), v.getCategoryId()));
+						}
 					} catch (ParseException ex) {
 						log.error("Parsing response", ex);
 					}
@@ -124,6 +131,7 @@ public class Client implements Runnable {
 		mfact = ConfigParser.createFromClasspathConfig("j8583/example/config.xml");
 		mfact.setAssignDate(true);
 		mfact.setTraceNumberGenerator(new SimpleTraceGenerator((int)(System.currentTimeMillis() % 10000)));
+		mfact.setCustomField(48, new ProductEncoder());
 		log.debug("Connecting to server");
 		Socket sock = new Socket("localhost", 9999);
 		//Send 10 messages, then wait for the responses
@@ -139,7 +147,10 @@ public class Client implements Runnable {
 			req.setValue(17, new Date(System.currentTimeMillis() + (86400*720)), IsoType.DATE_EXP, 0);
 			req.setValue(37, System.currentTimeMillis() % 1000000, IsoType.NUMERIC, 12);
 			req.setValue(41, data[rng.nextInt(data.length)], IsoType.ALPHA, 16);
-			req.setValue(48, data[rng.nextInt(data.length)], IsoType.LLLVAR, 0);
+			req.setField(48, new IsoValue<ProductData>(IsoType.LLLVAR,
+					new ProductData((int)(System.currentTimeMillis() % 1000), data[rng.nextInt(data.length)]),
+					new ProductEncoder()));
+			//req.setValue(48, "string data", IsoType.LLLVAR, 0);
 			pending.put(req.getField(11).toString(), req);
 			log.debug(String.format("Sending request %s", req.getField(11)));
 			req.write(sock.getOutputStream(), 2);
