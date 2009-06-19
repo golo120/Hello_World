@@ -51,7 +51,7 @@ public class ConfigParser {
 	 * located in the root of the classpath. */
 	public static MessageFactory createDefault() throws IOException {
 		if (MessageFactory.class.getClassLoader().getResource("j8583.xml") == null) {
-			log.warn("j8583.xml not found, returning empty message factory");
+			log.warn("ISO8583 ConfigParser cannot find j8583.xml, returning empty message factory");
 			return new MessageFactory();
 		} else {
 			return createFromClasspathConfig("j8583.xml");
@@ -64,7 +64,7 @@ public class ConfigParser {
 		MessageFactory mfact = new MessageFactory();
 		if (ins != null) {
 			if (log.isDebugEnabled()) {
-				log.debug("Parsing config from classpath file " + path);
+				log.debug("ISO8583 Parsing config from classpath file " + path);
 			}
 			try {
 				parse(mfact, ins);
@@ -72,7 +72,7 @@ public class ConfigParser {
 				ins.close();
 			}
 		} else {
-			log.warn("File not found in classpath: " + path);
+			log.warn("ISO8583 File not found in classpath: " + path);
 		}
 		return mfact;
 	}
@@ -100,10 +100,10 @@ public class ConfigParser {
 			docb = docfact.newDocumentBuilder();
 			doc = docb.parse(stream);
 		} catch (ParserConfigurationException ex) {
-			log.error("Cannot parse XML configuration", ex);
+			log.error("ISO8583 Cannot parse XML configuration", ex);
 			return;
 		} catch (SAXException ex) {
-			log.error("Parsing XML configuration", ex);
+			log.error("ISO8583 Parsing XML configuration", ex);
 			return;
 		}
 		final Element root = doc.getDocumentElement();
@@ -115,10 +115,10 @@ public class ConfigParser {
 			elem = (Element)nodes.item(i);
 			int type = parseType(elem.getAttribute("type"));
 			if (type == -1) {
-				throw new IOException("Invalid type for header: " + elem.getAttribute("type"));
+				throw new IOException("Invalid type for ISO8583 header: " + elem.getAttribute("type"));
 			}
 			if (elem.getChildNodes() == null || elem.getChildNodes().getLength() == 0) {
-				throw new IOException("Invalid header element");
+				throw new IOException("Invalid ISO8583 header element");
 			}
 			String header = elem.getChildNodes().item(0).getNodeValue();
 			if (log.isTraceEnabled()) {
@@ -133,7 +133,7 @@ public class ConfigParser {
 			elem = (Element)nodes.item(i);
 			int type = parseType(elem.getAttribute("type"));
 			if (type == -1) {
-				throw new IOException("Invalid type for template: " + elem.getAttribute("type"));
+				throw new IOException("Invalid ISO8583 type for template: " + elem.getAttribute("type"));
 			}
 			NodeList fields = elem.getElementsByTagName("field");
 			IsoMessage m = new IsoMessage();
@@ -158,23 +158,52 @@ public class ConfigParser {
 			elem = (Element)nodes.item(i);
 			int type = parseType(elem.getAttribute("type"));
 			if (type == -1) {
-				throw new IOException("Invalid type for parse guide: " + elem.getAttribute("type"));
+				throw new IOException("Invalid ISO8583 type for parse guide: " + elem.getAttribute("type"));
 			}
 			NodeList fields = elem.getElementsByTagName("field");
 			HashMap parseMap = new HashMap();
 			for (int j = 0; j < fields.getLength(); j++) {
 				Element f = (Element)fields.item(j);
-				Integer num = new Integer(f.getAttribute("num"));
+				int num = Integer.parseInt(f.getAttribute("num"), 10);
 				IsoType itype = IsoType.valueOf(f.getAttribute("type"));
 				int length = 0;
 				if (f.getAttribute("length").length() > 0) {
 					length = Integer.parseInt(f.getAttribute("length"));
 				}
-				parseMap.put(num, new FieldParseInfo(itype, length));
+				parseMap.put(new Integer(num), new FieldParseInfo(itype, length));
 			}
 			mfact.setParseMap(new Integer(type), parseMap);
 		}
 
+	}
+
+	/** Configures a MessageFactory using the default configuration file j8583.xml. This is useful
+	 * if you have a MessageFactory created using Spring for example. */
+	public static void configureFromDefault(MessageFactory mfact) throws IOException {
+		if (MessageFactory.class.getClassLoader().getResource("j8583.xml") == null) {
+			log.warn("ISO8583 config file j8583.xml not found!");
+		} else {
+			configureFromClasspathConfig(mfact, "j8583.xml");
+		}
+	}
+
+	/** Configures a MessageFactory using the configuration file at the path specified (will be searched
+	 * within the classpath using the MessageFactory's ClassLoader). This is useful for configuring
+	 * Spring-bound instances of MessageFactory for example. */
+	public static void configureFromClasspathConfig(MessageFactory mfact, String path) throws IOException {
+		InputStream ins = MessageFactory.class.getClassLoader().getResourceAsStream(path);
+		if (ins != null) {
+			if (log.isDebugEnabled()) {
+				log.debug("ISO8583 Parsing config from classpath file " + path);
+			}
+			try {
+				parse(mfact, ins);
+			} finally {
+				ins.close();
+			}
+		} else {
+			log.warn("ISO8583 File not found in classpath: " + path);
+		}
 	}
 
 	/** Parses a message type expressed as a hex string and returns the integer number.

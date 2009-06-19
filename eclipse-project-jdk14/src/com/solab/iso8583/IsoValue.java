@@ -35,22 +35,38 @@ import java.util.Date;
 public class IsoValue implements Cloneable {
 
 	private IsoType type;
-	private int length;
 	private Object value;
+	private CustomField encoder;
+	private int length;
+
+	public IsoValue(IsoType t, Object value) {
+		this(t, value, null);
+	}
 
 	/** Creates a new instance that stores the specified value as the specified type.
 	 * Useful for storing LLVAR or LLLVAR types, as well as fixed-length value types
 	 * like DATE10, DATE4, AMOUNT, etc.
 	 * @param t the ISO type.
-	 * @param value The value to be stored. */
-	public IsoValue(IsoType t, Object value) {
+	 * @param value The value to be stored.
+	 * @param custom An optional CustomField to encode/decode a custom value.
+	 */
+	public IsoValue(IsoType t, Object value, CustomField custom) {
 		if (t.needsLength()) {
 			throw new IllegalArgumentException("Fixed-value types must use constructor that specifies length");
 		}
+		encoder = custom;
 		type = t;
 		this.value = value;
 		if (type == IsoType.LLVAR || type == IsoType.LLLVAR) {
-			length = value.toString().length();
+			if (custom == null) {
+				length = value.toString().length();
+			} else {
+				String enc = custom.encodeField(value);
+				if (enc == null) {
+					enc = value == null ? "" : value.toString();
+				}
+				length = enc.length();
+			}
 			if (t == IsoType.LLVAR && length > 99) {
 				throw new IllegalArgumentException("LLVAR can only hold values up to 99 chars");
 			} else if (t == IsoType.LLLVAR && length > 999) {
@@ -61,16 +77,26 @@ public class IsoValue implements Cloneable {
 		}
 	}
 
-	/** Creates a new instance that stores the specified value as the specified type.
-	 * Useful for storing fixed-length value types. */
 	public IsoValue(IsoType t, Object val, int len) {
+		this(t, val, len, null);
+	}
+
+	/** Creates a new instance that stores the specified value as the specified type.
+	 * Useful for storing fixed-length value types.
+	 * @param t The ISO8583 type for this field.
+	 * @param val The value to store in the field.
+	 * @param len The length for the value.
+	 * @param custom An optional CustomField to encode/decode a custom value.
+	 */
+	public IsoValue(IsoType t, Object val, int len, CustomField custom) {
 		type = t;
 		value = val;
 		length = len;
+		encoder = custom;
 		if (length == 0 && t.needsLength()) {
-			throw new IllegalArgumentException("Length must be greater than zero");
+			throw new IllegalArgumentException("Length must be greater than zero for type " + t + " (value '" + val + "')");
 		} else if (t == IsoType.LLVAR || t == IsoType.LLLVAR) {
-			length = val.toString().length();
+			length = custom == null ? val.toString().length() : custom.encodeField(value).length();
 			if (t == IsoType.LLVAR && length > 99) {
 				throw new IllegalArgumentException("LLVAR can only hold values up to 99 chars");
 			} else if (t == IsoType.LLLVAR && length > 999) {
@@ -108,16 +134,16 @@ public class IsoValue implements Cloneable {
 			} else if (value instanceof Number) {
 				return type.format(((Number)value).longValue(), length);
 			} else {
-				return type.format(value.toString(), length);
+				return type.format(encoder == null ? value.toString() : encoder.encodeField(value), length);
 			}
 		} else if (type == IsoType.ALPHA) {
-			return type.format(value.toString(), length);
+			return type.format(encoder == null ? value.toString() : encoder.encodeField(value), length);
 		} else if (type == IsoType.LLLVAR || type == IsoType.LLLVAR) {
-			return value.toString();
+			return encoder == null ? value.toString() : encoder.encodeField(value);
 		} else if (value instanceof Date) {
 			return type.format((Date)value);
 		}
-		return value.toString();
+		return encoder == null ? value.toString() : encoder.encodeField(value);
 	}
 
 	/** Returns a copy of the receiver that references the same value object. */
@@ -137,6 +163,10 @@ public class IsoValue implements Cloneable {
 		}
 		IsoValue comp = (IsoValue)other;
 		return (comp.getType() == getType() && comp.getValue().equals(getValue()) && comp.getLength() == getLength());
+	}
+
+	public int hashCode() {
+		return value == null ? 0 : toString().hashCode();
 	}
 
 	/** Writes the formatted value to a stream, with the length header

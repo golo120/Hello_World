@@ -18,6 +18,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 package com.solab.iso8583;
 
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -31,6 +32,7 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.solab.iso8583.parse.ConfigParser;
 import com.solab.iso8583.parse.FieldParseInfo;
 
 /** This class is used to create messages, either from scratch or from an existing String or byte
@@ -49,26 +51,50 @@ import com.solab.iso8583.parse.FieldParseInfo;
  */
 public class MessageFactory {
 
-	protected static final Log log = LogFactory.getLog(MessageFactory.class);
+	protected final Log log = LogFactory.getLog(getClass());
 
-	/** This map stores the message template for each message type. Keys are integers, values are IsoMessages. */
+	/** This map stores the message template for each message type. */
 	private Map typeTemplates = new HashMap();
-	/** Stores the information needed to parse messages sorted by type.
-	 * Keys are Integers, values are Maps of Integers and FieldParseInfos. */
+	/** Stores the information needed to parse messages sorted by type. */
 	private Map parseMap = new HashMap();
-	/** Stores the field numbers to be parsed, in order of appearance.
-	 * Keys are Integers, values are Lists of Integers. */
+	/** Stores the field numbers to be parsed, in order of appearance. */
 	private Map parseOrder = new HashMap();
 
 	private TraceNumberGenerator traceGen;
-	/** The ISO header to be included in each message type.
-	 * Keys are Integers, values are Strings. */
+	/** The ISO header to be included in each message type. */
 	private Map isoHeaders = new HashMap();
+	/** A map for the custom field encoder/decoders, keyed by field number. */
+	private Map customFields = new HashMap();
 	/** Indicates if the current date should be set on new messages (field 7). */
 	private boolean setDate;
 	/** Indicates if the factory should create binary messages and also parse binary messages. */
 	private boolean useBinary;
 	private int etx = -1;
+
+	/** Specifies a map for custom field encoder/decoders. The keys are the field numbers. */
+	public void setCustomFields(Map value) {
+		customFields = value;
+	}
+
+	/** Sets the CustomField encoder for the specified field number. */
+	public void setCustomField(int index, CustomField value) {
+		customFields.put(new Integer(index), value);
+	}
+	/** Returns a custom field encoder/decoder for the specified field number, if one is available. */
+	public CustomField getCustomField(int index) {
+		return (CustomField)customFields.get(new Integer(index));
+	}
+	/** Returns a custom field encoder/decoder for the specified field number, if one is available. */
+	public CustomField getCustomField(Integer index) {
+		return (CustomField)customFields.get(index);
+	}
+
+	/** Tells the receiver to read the configuration at the specified path. This just calls
+	 * ConfigParser.configureFromClasspathConfig() with itself and the specified path at arguments,
+	 * but is really convenient in case the MessageFactory is being configured from within, say, Spring. */
+	public void setConfigPath(String path) throws IOException {
+		ConfigParser.configureFromClasspathConfig(this, path);
+	}
 
 	/** Tells the receiver to create and parse binary messages if the flag is true.
 	 * Default is false, that is, create and parse ASCII messages. */
@@ -87,20 +113,22 @@ public class MessageFactory {
 	public void setEtx(int value) {
 		etx = value;
 	}
+	public int getEtx() {
+		return etx;
+	}
 
 	/** Creates a new message of the specified type, with optional trace and date values as well
 	 * as any other values specified in a message template. If the factory is set to use binary
 	 * messages, then the returned message will be written using binary coding.
 	 * @param type The message type, for example 0x200, 0x400, etc. */
 	public IsoMessage newMessage(int type) {
-		Integer itype = new Integer(type);
-		IsoMessage m = new IsoMessage((String)isoHeaders.get(itype));
+		IsoMessage m = new IsoMessage((String)isoHeaders.get(new Integer(type)));
 		m.setType(type);
 		m.setEtx(etx);
 		m.setBinary(useBinary);
 
 		//Copy the values from the template
-		IsoMessage templ = (IsoMessage)typeTemplates.get(itype);
+		IsoMessage templ = (IsoMessage)typeTemplates.get(new Integer(type));
 		if (templ != null) {
 			for (int i = 2; i < 128; i++) {
 				if (templ.hasField(i)) {
@@ -122,13 +150,12 @@ public class MessageFactory {
 	 * overwriting fields from the template if they overlap.
 	 * @param request An ISO8583 message with a request type (ending in 00). */
 	public IsoMessage createResponse(IsoMessage request) {
-		Integer rtype = new Integer(request.getType() + 16);
-		IsoMessage resp = new IsoMessage((String)isoHeaders.get(rtype));
+		IsoMessage resp = new IsoMessage((String)isoHeaders.get(new Integer(request.getType() + 16)));
 		resp.setBinary(request.isBinary());
 		resp.setType(request.getType() + 16);
 		resp.setEtx(etx);
 		//Copy the values from the template
-		IsoMessage templ = (IsoMessage)typeTemplates.get(rtype);
+		IsoMessage templ = (IsoMessage)typeTemplates.get(new Integer(resp.getType()));
 		if (templ != null) {
 			for (int i = 2; i < 128; i++) {
 				if (templ.hasField(i)) {
@@ -188,36 +215,59 @@ public class MessageFactory {
 				pos = 10 + isoHeaderLength;
 			}
 		} else {
-			for (int i = isoHeaderLength + 4; i < isoHeaderLength + 20; i++) {
-				int hex = Integer.parseInt(new String(buf, i, 1), 16);
-				bs.set(pos++, (hex & 8) > 0);
-				bs.set(pos++, (hex & 4) > 0);
-				bs.set(pos++, (hex & 2) > 0);
-				bs.set(pos++, (hex & 1) > 0);
-			}
-			//Check for secondary bitmap and parse it if necessary
-			if (bs.get(0)) {
-				for (int i = isoHeaderLength + 20; i < isoHeaderLength + 36; i++) {
+			try {
+				for (int i = isoHeaderLength + 4; i < isoHeaderLength + 20; i++) {
 					int hex = Integer.parseInt(new String(buf, i, 1), 16);
 					bs.set(pos++, (hex & 8) > 0);
 					bs.set(pos++, (hex & 4) > 0);
 					bs.set(pos++, (hex & 2) > 0);
 					bs.set(pos++, (hex & 1) > 0);
 				}
-				pos = 36 + isoHeaderLength;
-			} else {
-				pos = 20 + isoHeaderLength;
+				//Check for secondary bitmap and parse it if necessary
+				if (bs.get(0)) {
+					for (int i = isoHeaderLength + 20; i < isoHeaderLength + 36; i++) {
+						int hex = Integer.parseInt(new String(buf, i, 1), 16);
+						bs.set(pos++, (hex & 8) > 0);
+						bs.set(pos++, (hex & 4) > 0);
+						bs.set(pos++, (hex & 2) > 0);
+						bs.set(pos++, (hex & 1) > 0);
+					}
+					pos = 36 + isoHeaderLength;
+				} else {
+					pos = 20 + isoHeaderLength;
+				}
+			} catch (NumberFormatException ex) {
+				ParseException _e = new ParseException("Invalid ISO8583 bitmap", pos);
+				_e.initCause(ex);
+				throw _e;
 			}
 		}
 		//Parse each field
 		Integer itype = new Integer(type);
 		Map parseGuide = (Map)parseMap.get(itype);
 		List index = (List)parseOrder.get(itype);
+		if (index == null) {
+			log.error("ISO8583 MessageFactory has no parsing guide for message type " + Integer.toHexString(type)
+				+ "[" + new String(buf) + "]");
+			return null;
+		}
+		//First we check if the message contains fields not specified in the parsing template
+		boolean abandon = false;
+		for (int i = 1; i < bs.length(); i++) {
+			if (bs.get(i) && !index.contains(new Integer(i+1))) {
+				log.warn("ISO8583 MessageFactory cannot parse field " + (i+1) + ": unspecified in parsing guide");
+				abandon = true;
+			}
+		}
+		if (abandon) {
+			return m;
+		}
+		//Now we parse each field
 		for (Iterator iter = index.iterator(); iter.hasNext();) {
 			Integer i = (Integer)iter.next();
 			FieldParseInfo fpi = (FieldParseInfo)parseGuide.get(i);
 			if (bs.get(i.intValue() - 1)) {
-				IsoValue val = useBinary ? fpi.parseBinary(buf, pos) : fpi.parse(buf, pos);
+				IsoValue val = useBinary ? fpi.parseBinary(buf, pos, getCustomField(i)) : fpi.parse(buf, pos, getCustomField(i));
 				m.setField(i.intValue(), val);
 				if (useBinary && !(val.getType() == IsoType.ALPHA || val.getType() == IsoType.LLVAR
 						|| val.getType() == IsoType.LLLVAR)) {
@@ -232,6 +282,7 @@ public class MessageFactory {
 				}
 			}
 		}
+		m.setBinary(useBinary);
 		return m;
 	}
 
@@ -291,6 +342,12 @@ public class MessageFactory {
 	/** Removes the message template for the specified type. */
 	public void removeMessageTemplate(int type) {
 		typeTemplates.remove(new Integer(type));
+	}
+
+	/** Returns the template for the specified message type. This allows templates to be modified
+	 * programatically. */
+	public IsoMessage getMessageTemplate(int type) {
+		return (IsoMessage)typeTemplates.get(new Integer(type));
 	}
 
 	/** Sets a map with the fields that are to be expected when parsing a certain type of

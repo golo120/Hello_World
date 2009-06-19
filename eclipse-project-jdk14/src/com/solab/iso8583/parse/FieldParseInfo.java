@@ -24,6 +24,7 @@ import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
 
+import com.solab.iso8583.CustomField;
 import com.solab.iso8583.IsoType;
 import com.solab.iso8583.IsoValue;
 
@@ -60,21 +61,46 @@ public class FieldParseInfo {
 
 	/** Parses the character data from the buffer and returns the
 	 * IsoValue with the correct data type in it. */
-	public IsoValue parse(byte[] buf, int pos) throws ParseException {
+	public IsoValue parse(byte[] buf, int pos, CustomField custom) throws ParseException {
 		if (type == IsoType.NUMERIC || type == IsoType.ALPHA) {
-			return new IsoValue(type, new String(buf, pos, length), length);
+			if (custom == null) {
+				return new IsoValue(type, new String(buf, pos, length), length, null);
+			} else {
+				IsoValue v = new IsoValue(type, custom.decodeField(new String(buf, pos, length)), length, custom);
+				if (v.getValue() == null) {
+					v = new IsoValue(type, new String(buf, pos, length), length, null);
+				}
+				return v;
+			}
 		} else if (type == IsoType.LLVAR) {
 			length = ((buf[pos] - 48) * 10) + (buf[pos + 1] - 48);
-			return new IsoValue(type, new String(buf, pos + 2, length));
+			if (custom == null) {
+				return new IsoValue(type, new String(buf, pos + 2, length), null);
+			} else {
+				IsoValue v = new IsoValue(type, custom.decodeField(new String(buf, pos + 2, length)), custom);
+				if (v.getValue() == null) {
+					v = new IsoValue(type, new String(buf, pos + 2, length), null);
+				}
+				return v;
+			}
 		} else if (type == IsoType.LLLVAR) {
 			length = ((buf[pos] - 48) * 100) + ((buf[pos + 1] - 48) * 10) + (buf[pos + 2] - 48);
-			return new IsoValue(type, new String(buf, pos + 3, length));
+			if (custom == null) {
+				return new IsoValue(type, new String(buf, pos + 3, length), null);
+			} else {
+				IsoValue v = new IsoValue(type, custom.decodeField(new String(buf, pos + 3, length)), custom);
+				if (v.getValue() == null) {
+					//problems decoding? return the string
+					v = new IsoValue(type, new String(buf, pos + 3, length), null);
+				}
+				return v;
+			}
 		} else if (type == IsoType.AMOUNT) {
 			byte[] c = new byte[13];
 			System.arraycopy(buf, pos, c, 0, 10);
 			System.arraycopy(buf, pos + 10, c, 11, 2);
 			c[10] = '.';
-			return new IsoValue(type, new BigDecimal(new String(c)));
+			return new IsoValue(type, new BigDecimal(new String(c)), null);
 		} else if (type == IsoType.DATE10) {
 			//A SimpleDateFormat in the case of dates won't help because of the missing data
 			//we have to use the current date for reference and change what comes in the buffer
@@ -88,7 +114,7 @@ public class FieldParseInfo {
 			if (cal.getTime().after(new Date())) {
 				cal.add(Calendar.YEAR, -1);
 			}
-			return new IsoValue(type, cal.getTime());
+			return new IsoValue(type, cal.getTime(), null);
 		} else if (type == IsoType.DATE4) {
 			Calendar cal = Calendar.getInstance();
 			cal.set(Calendar.HOUR, 0);
@@ -100,7 +126,7 @@ public class FieldParseInfo {
 			if (cal.getTime().after(new Date())) {
 				cal.add(Calendar.YEAR, -1);
 			}
-			return new IsoValue(type, cal.getTime());
+			return new IsoValue(type, cal.getTime(), null);
 		} else if (type == IsoType.DATE_EXP) {
 			Calendar cal = Calendar.getInstance();
 			cal.set(Calendar.HOUR, 0);
@@ -111,23 +137,31 @@ public class FieldParseInfo {
 			cal.set(Calendar.YEAR, cal.get(Calendar.YEAR) - (cal.get(Calendar.YEAR) % 100)
 					+ ((buf[pos] - 48) * 10) + buf[pos + 1] - 48);
 			cal.set(Calendar.MONTH, ((buf[pos + 2] - 48) * 10) + buf[pos + 3] - 49);
-			return new IsoValue(type, cal.getTime());
+			return new IsoValue(type, cal.getTime(), null);
 		} else if (type == IsoType.TIME) {
 			Calendar cal = Calendar.getInstance();
 			cal.set(Calendar.HOUR_OF_DAY, ((buf[pos] - 48) * 10) + buf[pos + 1] - 48);
 			cal.set(Calendar.MINUTE, ((buf[pos + 2] - 48) * 10) + buf[pos + 3] - 48);
 			cal.set(Calendar.SECOND, ((buf[pos + 4] - 48) * 10) + buf[pos + 5] - 48);
-			return new IsoValue(type, cal.getTime());
+			return new IsoValue(type, cal.getTime(), null);
 		}
 		return null;
 	}
 
 	/** Parses binary data from the buffer, creating and returning an IsoValue of the configured
 	 * type and length. */
-	public IsoValue parseBinary(byte[] buf, int pos) throws ParseException {
+	public IsoValue parseBinary(byte[] buf, int pos, CustomField custom) throws ParseException {
 		if (type == IsoType.ALPHA) {
 
-			return new IsoValue(type, new String(buf, pos, length), length);
+			if (custom == null) {
+				return new IsoValue(type, new String(buf, pos, length), length, null);
+			} else {
+				IsoValue v = new IsoValue(type, custom.decodeField(new String(buf, pos, length)), length, custom);
+				if (v.getValue() == null) {
+					v = new IsoValue(type, new String(buf, pos, length), length, null);
+				}
+				return v;
+			}
 
 		} else if (type == IsoType.NUMERIC) {
 
@@ -141,7 +175,7 @@ public class FieldParseInfo {
 					l += ((buf[i] & 0xf0) >> 4) * power;
 					power *= 10;
 				}
-				return new IsoValue(IsoType.NUMERIC, new Long(l), length);
+				return new IsoValue(IsoType.NUMERIC, new Long(l), length, null);
 			} else {
 				//Use a BigInteger
 				char[] digits = new char[length];
@@ -150,18 +184,34 @@ public class FieldParseInfo {
 					digits[start++] = (char)(((buf[i] & 0xf0) >> 4) + 48);
 					digits[start++] = (char)((buf[i] & 0x0f) + 48);
 				}
-				return new IsoValue(IsoType.NUMERIC, new BigInteger(new String(digits)), length);
+				return new IsoValue(IsoType.NUMERIC, new BigInteger(new String(digits)), length, null);
 			}
 
 		} else if (type == IsoType.LLVAR) {
 
 			length = (((buf[pos] & 0xf0) >> 4) * 10) + (buf[pos] & 0x0f);
-			return new IsoValue(type, new String(buf, pos + 1, length));
+			if (custom == null) {
+				return new IsoValue(type, new String(buf, pos + 1, length), null);
+			} else {
+				IsoValue v = new IsoValue(type, custom.decodeField(new String(buf, pos + 1, length)), custom);
+				if (v.getValue() == null) {
+					v = new IsoValue(type, new String(buf, pos + 1, length), null);
+				}
+				return v;
+			}
 
 		} else if (type == IsoType.LLLVAR) {
 
 			length = ((buf[pos] & 0x0f) * 100) + (((buf[pos + 1] & 0xf0) >> 4) * 10) + (buf[pos + 1] & 0x0f);
-			return new IsoValue(type, new String(buf, pos + 2, length));
+			if (custom == null) {
+				return new IsoValue(type, new String(buf, pos + 2, length), null);
+			} else {
+				IsoValue v = new IsoValue(type, custom.decodeField(new String(buf, pos + 2, length)), custom);
+				if (v.getValue() == null) {
+					v = new IsoValue(type, new String(buf, pos + 2, length), null);
+				}
+				return v;
+			}
 
 		} else if (type == IsoType.AMOUNT) {
 
@@ -175,7 +225,7 @@ public class FieldParseInfo {
 					start++;
 				}
 			}
-			return new IsoValue(IsoType.AMOUNT, new BigDecimal(new String(digits)));
+			return new IsoValue(IsoType.AMOUNT, new BigDecimal(new String(digits)), null);
 		} else if (type == IsoType.DATE10 || type == IsoType.DATE4 || type == IsoType.DATE_EXP
 				|| type == IsoType.TIME) {
 
@@ -197,7 +247,7 @@ public class FieldParseInfo {
 				if (cal.getTime().after(new Date())) {
 					cal.add(Calendar.YEAR, -1);
 				}
-				return new IsoValue(type, cal.getTime());
+				return new IsoValue(type, cal.getTime(), null);
 			} else if (type == IsoType.DATE4) {
 				cal.set(Calendar.HOUR, 0);
 				cal.set(Calendar.MINUTE, 0);
@@ -208,7 +258,7 @@ public class FieldParseInfo {
 				if (cal.getTime().after(new Date())) {
 					cal.add(Calendar.YEAR, -1);
 				}
-				return new IsoValue(type, cal.getTime());
+				return new IsoValue(type, cal.getTime(), null);
 			} else if (type == IsoType.DATE_EXP) {
 				cal.set(Calendar.HOUR, 0);
 				cal.set(Calendar.MINUTE, 0);
@@ -218,14 +268,14 @@ public class FieldParseInfo {
 				cal.set(Calendar.YEAR, cal.get(Calendar.YEAR)
 						- (cal.get(Calendar.YEAR) % 100) + tens[0]);
 				cal.set(Calendar.MONTH, tens[1] - 1);
-				return new IsoValue(type, cal.getTime());
+				return new IsoValue(type, cal.getTime(), null);
 			} else if (type == IsoType.TIME) {
 				cal.set(Calendar.HOUR_OF_DAY, tens[0]);
 				cal.set(Calendar.MINUTE, tens[1]);
 				cal.set(Calendar.SECOND, tens[2]);
-				return new IsoValue(type, cal.getTime());
+				return new IsoValue(type, cal.getTime(), null);
 			}
-			return new IsoValue(type, cal.getTime());
+			return new IsoValue(type, cal.getTime(), null);
 		}
 		return null;
 	}

@@ -125,6 +125,17 @@ public class IsoMessage {
      * @param length The length of the field, used for ALPHA and NUMERIC values only, ignored
      * with any other type. */
     public void setValue(int index, Object value, IsoType t, int length) {
+    	setValue(index, value, null, t, length);
+    }
+
+    /** Sets the specified value in the specified field, creating an IsoValue internally.
+     * @param index The field number (2 to 128)
+     * @param value The value to be stored.
+     * @param encoder An optional CustomField to encode/decode the value.
+     * @param t The ISO type.
+     * @param length The length of the field, used for ALPHA and NUMERIC values only, ignored
+     * with any other type. */
+    public void setValue(int index, Object value, CustomField encoder, IsoType t, int length) {
     	if (index < 2 || index > 128) {
     		throw new IndexOutOfBoundsException("Field index must be between 2 and 128");
     	}
@@ -133,9 +144,9 @@ public class IsoMessage {
     	} else {
     		IsoValue v = null;
     		if (t.needsLength()) {
-    			v = new IsoValue(t, value, length);
+    			v = new IsoValue(t, value, length, encoder);
     		} else {
-    			v = new IsoValue(t, value);
+    			v = new IsoValue(t, value, encoder);
     		}
     		fields.put(new Integer(index), v);
     	}
