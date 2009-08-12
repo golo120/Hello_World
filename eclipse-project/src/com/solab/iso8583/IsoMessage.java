@@ -60,6 +60,11 @@ public class IsoMessage {
     	isoHeader = header;
     }
 
+    /** Sets the string to be sent as ISO header, that is, after the length header but before the message type. 
+     * This is useful in case an application needs some custom data in the ISO header of each message (very rare). */
+    public void setIsoHeader(String value) {
+    	isoHeader = value;
+    }
     /** Returns the ISO header that this message was created with. */
     public String getIsoHeader() {
     	return isoHeader;
@@ -142,7 +147,7 @@ public class IsoMessage {
     	if (value == null) {
     		fields.remove(index);
     	} else {
-    		IsoValue v = null;
+    		IsoValue<?> v = null;
     		if (t.needsLength()) {
     			v = new IsoValue<Object>(t, value, length, encoder);
     		} else {
@@ -243,6 +248,12 @@ public class IsoMessage {
     	return buf;
     }
 
+    /** This calls writeInternal(), allowing applications to get the byte buffer containing the
+     * message data, without the length header. */
+    public byte[] writeData() {
+    	return writeInternal();
+    }
+
     /** Writes the message to a memory buffer and returns it. The message does not include
      * the ETX character or the header length. */
     protected byte[] writeInternal() {
@@ -302,20 +313,20 @@ public class IsoMessage {
             for (int i = 0; i < lim; i++) {
                 int nibble = 0;
                 if (bs.get(pos++))
-                    nibble += 8;
+                    nibble |= 8;
                 if (bs.get(pos++))
-                    nibble += 4;
+                    nibble |= 4;
                 if (bs.get(pos++))
-                    nibble += 2;
+                    nibble |= 2;
                 if (bs.get(pos++))
-                    nibble++;
+                    nibble |= 1;
                 bout.write(HEX[nibble]);
             }
     	}
 
     	//Fields
     	for (Integer i : keys) {
-    		IsoValue v = fields.get(i);
+    		IsoValue<?> v = fields.get(i);
     		try {
     			v.write(bout, binary);
     		} catch (IOException ex) {
