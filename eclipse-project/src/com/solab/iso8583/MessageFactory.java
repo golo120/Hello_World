@@ -216,20 +216,42 @@ public class MessageFactory {
 		} else {
 			try {
 				for (int i = isoHeaderLength + 4; i < isoHeaderLength + 20; i++) {
-					int hex = Integer.parseInt(new String(buf, i, 1), 16);
-					bs.set(pos++, (hex & 8) > 0);
-					bs.set(pos++, (hex & 4) > 0);
-					bs.set(pos++, (hex & 2) > 0);
-					bs.set(pos++, (hex & 1) > 0);
+					if (buf[i] >= '0' && buf[i] <= '9') {
+						bs.set(pos++, ((buf[i] - 48) & 8) > 0);
+						bs.set(pos++, ((buf[i] - 48) & 4) > 0);
+						bs.set(pos++, ((buf[i] - 48) & 2) > 0);
+						bs.set(pos++, ((buf[i] - 48) & 1) > 0);
+					} else if (buf[i] >= 'A' && buf[i] <= 'F') {
+						bs.set(pos++, ((buf[i] - 55) & 8) > 0);
+						bs.set(pos++, ((buf[i] - 55) & 4) > 0);
+						bs.set(pos++, ((buf[i] - 55) & 2) > 0);
+						bs.set(pos++, ((buf[i] - 5) & 1) > 0);
+					} else if (buf[i] >= 'a' && buf[i] <= 'f') {
+						bs.set(pos++, ((buf[i] - 87) & 8) > 0);
+						bs.set(pos++, ((buf[i] - 87) & 4) > 0);
+						bs.set(pos++, ((buf[i] - 87) & 2) > 0);
+						bs.set(pos++, ((buf[i] - 87) & 1) > 0);
+					}
 				}
 				//Check for secondary bitmap and parse it if necessary
 				if (bs.get(0)) {
 					for (int i = isoHeaderLength + 20; i < isoHeaderLength + 36; i++) {
-						int hex = Integer.parseInt(new String(buf, i, 1), 16);
-						bs.set(pos++, (hex & 8) > 0);
-						bs.set(pos++, (hex & 4) > 0);
-						bs.set(pos++, (hex & 2) > 0);
-						bs.set(pos++, (hex & 1) > 0);
+						if (buf[i] >= '0' && buf[i] <= '9') {
+							bs.set(pos++, ((buf[i] - 48) & 8) > 0);
+							bs.set(pos++, ((buf[i] - 48) & 4) > 0);
+							bs.set(pos++, ((buf[i] - 48) & 2) > 0);
+							bs.set(pos++, ((buf[i] - 48) & 1) > 0);
+						} else if (buf[i] >= 'A' && buf[i] <= 'F') {
+							bs.set(pos++, ((buf[i] - 55) & 8) > 0);
+							bs.set(pos++, ((buf[i] - 55) & 4) > 0);
+							bs.set(pos++, ((buf[i] - 55) & 2) > 0);
+							bs.set(pos++, ((buf[i] - 5) & 1) > 0);
+						} else if (buf[i] >= 'a' && buf[i] <= 'f') {
+							bs.set(pos++, ((buf[i] - 87) & 8) > 0);
+							bs.set(pos++, ((buf[i] - 87) & 4) > 0);
+							bs.set(pos++, ((buf[i] - 87) & 2) > 0);
+							bs.set(pos++, ((buf[i] - 87) & 1) > 0);
+						}
 					}
 					pos = 36 + isoHeaderLength;
 				} else {
