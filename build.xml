@@ -1,6 +1,6 @@
 <project name="j8583" default="all">
 
-<property name="j8583.release" value="1.2" />
+<property name="j8583.release" value="1.3" />
 
 <target name="all" depends="build,build14,pack" />
 
