@@ -27,8 +27,8 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -45,7 +45,7 @@ import com.solab.iso8583.MessageFactory;
  */
 public class ConfigParser {
 
-	private final static Log log = LogFactory.getLog(ConfigParser.class);
+	private final static Logger log = LoggerFactory.getLogger(ConfigParser.class);
 
 	/** Creates a message factory configured from the default file, which is j8583.xml
 	 * located in the root of the classpath. */
@@ -64,7 +64,7 @@ public class ConfigParser {
 		MessageFactory mfact = new MessageFactory();
 		if (ins != null) {
 			if (log.isDebugEnabled()) {
-				log.debug("ISO8583 Parsing config from classpath file " + path);
+				log.debug("ISO8583 Parsing config from classpath file {}", path);
 			}
 			try {
 				parse(mfact, ins);
@@ -72,7 +72,7 @@ public class ConfigParser {
 				ins.close();
 			}
 		} else {
-			log.warn("ISO8583 File not found in classpath: " + path);
+			log.warn("ISO8583 File not found in classpath: {}", path);
 		}
 		return mfact;
 	}
@@ -122,7 +122,7 @@ public class ConfigParser {
 			}
 			String header = elem.getChildNodes().item(0).getNodeValue();
 			if (log.isTraceEnabled()) {
-				log.trace(String.format("Adding ISO8583 header for type %s: %s", elem.getAttribute("type"), header));
+				log.trace("Adding ISO8583 header for type {}: {}", elem.getAttribute("type"), header);
 			}
 			mfact.setIsoHeader(type, header);
 		}
@@ -194,7 +194,7 @@ public class ConfigParser {
 		InputStream ins = MessageFactory.class.getClassLoader().getResourceAsStream(path);
 		if (ins != null) {
 			if (log.isDebugEnabled()) {
-				log.debug("ISO8583 Parsing config from classpath file " + path);
+				log.debug("ISO8583 Parsing config from classpath file {}", path);
 			}
 			try {
 				parse(mfact, ins);
@@ -202,7 +202,7 @@ public class ConfigParser {
 				ins.close();
 			}
 		} else {
-			log.warn("ISO8583 File not found in classpath: " + path);
+			log.warn("ISO8583 File not found in classpath: {}", path);
 		}
 	}
 

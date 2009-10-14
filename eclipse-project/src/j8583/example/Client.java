@@ -26,8 +26,8 @@ import java.util.Date;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.solab.iso8583.IsoMessage;
 import com.solab.iso8583.IsoType;
@@ -43,7 +43,7 @@ import com.solab.iso8583.parse.ConfigParser;
  */
 public class Client implements Runnable {
 
-	private static final Log log = LogFactory.getLog(Client.class);
+	private static final Logger log = LoggerFactory.getLogger(Client.class);
 
 	private static final String[] data = new String[]{
 		"1234567890", "5432198765", "1020304050", "abcdefghij", "AbCdEfGhIj",
@@ -80,14 +80,14 @@ public class Client implements Runnable {
 						String respHeader = mfact.getIsoHeader(0x200);
 						IsoMessage resp = mfact.parseMessage(buf,
 							respHeader == null ? 12 : respHeader.length());
-						log.debug(String.format("Read response %s conf %s: %s",
-							resp.getField(11), resp.getField(38), new String(buf)));
+						log.debug("Read response {} conf {}: {}", new Object[]{
+							resp.getField(11), resp.getField(38), new String(buf)});
 						pending.remove(resp.getField(11).toString());
 						IsoValue<?> f48 = resp.getField(48);
 						if (f48 != null && f48.getValue() instanceof ProductData) {
 							ProductData v = (ProductData)f48.getValue();
-							log.debug(String.format("Field 48 encoded: '%s' pid:%s cat:%d",
-								f48, v.getProductId(), v.getCategoryId()));
+							log.debug("Field 48 encoded: '{}' pid:{} cat:{}", new Object[]{
+								f48, v.getProductId(), v.getCategoryId()});
 						}
 					} catch (ParseException ex) {
 						log.error("Parsing response", ex);
@@ -99,7 +99,7 @@ public class Client implements Runnable {
 			}
 		} catch (IOException ex) {
 			if (done) {
-				log.info(String.format("Socket closed because we're done (%d pending)", pending.size()));
+				log.info("Socket closed because we're done ({} pending)", pending.size());
 			} else {
 				log.error(String.format("Reading responses, %d pending", pending.size()), ex);
 				try {
@@ -152,7 +152,7 @@ public class Client implements Runnable {
 					new ProductEncoder()));
 			//req.setValue(48, "string data", IsoType.LLLVAR, 0);
 			pending.put(req.getField(11).toString(), req);
-			log.debug(String.format("Sending request %s", req.getField(11)));
+			log.debug("Sending request {}", req.getField(11));
 			req.write(sock.getOutputStream(), 2);
 		}
 		log.debug("Waiting for responses");

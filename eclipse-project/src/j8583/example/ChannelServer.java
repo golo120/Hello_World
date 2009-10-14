@@ -14,8 +14,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.solab.iso8583.IsoMessage;
 import com.solab.iso8583.IsoType;
@@ -29,7 +29,7 @@ import com.solab.iso8583.parse.ConfigParser;
  */
 public class ChannelServer implements Runnable {
 
-	private static final Log log = LogFactory.getLog(ChannelServer.class);
+	private static final Logger log = LoggerFactory.getLogger(ChannelServer.class);
 	private static MessageFactory mfact;
 	private static ScheduledExecutorService threadPool = Executors.newScheduledThreadPool(5);
 
@@ -43,7 +43,7 @@ public class ChannelServer implements Runnable {
 
 	public void run() {
 		try {
-			log.debug(String.format("Parsing incoming: '%s'", new String(data)));
+			log.debug("Parsing incoming: '{}'", new String(data));
 			IsoMessage incoming = mfact.parseMessage(data, 12);
 			//Create a response
 			IsoMessage response = mfact.createResponse(incoming);
@@ -53,10 +53,10 @@ public class ChannelServer implements Runnable {
 			response.setValue(39, 0, IsoType.NUMERIC, 2);
 			response.setValue(61, String.format("Dynamic data generated at %TT", new Date()),
 				IsoType.LLLVAR, 0);
-			log.debug(String.format("Sending response conf %s", response.getField(38)));
+			log.debug("Sending response conf {}", response.getField(38));
 			socket.write(response.writeToBuffer(2));
 		} catch (ParseException ex) {
-			log.error(String.format("Parsing request %s", new String(data)));
+			log.error("Parsing request {}", new String(data));
 		} catch (IOException ex) {
 			log.error("Writing response", ex);
 		}
@@ -78,8 +78,8 @@ public class ChannelServer implements Runnable {
 				if ((skey.readyOps() & SelectionKey.OP_ACCEPT) == SelectionKey.OP_ACCEPT) {
 					//Accept a new connection
 					SocketChannel socket = server.accept();
-					log.info(String.format("New connection from %s:%d",
-						socket.socket().getInetAddress(), socket.socket().getPort()));
+					log.info("New connection from {}:{}",
+						socket.socket().getInetAddress(), socket.socket().getPort());
 					socket.configureBlocking(false);
 					DataReader reader = new DataReader();
 					reader.reset();

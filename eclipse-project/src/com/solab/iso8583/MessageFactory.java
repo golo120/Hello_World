@@ -28,8 +28,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.solab.iso8583.parse.ConfigParser;
 import com.solab.iso8583.parse.FieldParseInfo;
@@ -50,7 +50,7 @@ import com.solab.iso8583.parse.FieldParseInfo;
  */
 public class MessageFactory {
 
-	protected final Log log = LogFactory.getLog(getClass());
+	protected final Logger log = LoggerFactory.getLogger(getClass());
 
 	/** This map stores the message template for each message type. */
 	private Map<Integer, IsoMessage> typeTemplates = new HashMap<Integer, IsoMessage>();
@@ -275,7 +275,7 @@ public class MessageFactory {
 		boolean abandon = false;
 		for (int i = 1; i < bs.length(); i++) {
 			if (bs.get(i) && !index.contains(i+1)) {
-				log.warn(String.format("ISO8583 MessageFactory cannot parse field %d: unspecified in parsing guide", i+1));
+				log.warn("ISO8583 MessageFactory cannot parse field {}: unspecified in parsing guide", i+1);
 				abandon = true;
 			}
 		}

@@ -27,8 +27,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.solab.iso8583.IsoMessage;
 import com.solab.iso8583.IsoType;
@@ -42,7 +42,7 @@ import com.solab.iso8583.parse.ConfigParser;
  */
 public class Server implements Runnable {
 
-	private static final Log log = LogFactory.getLog(Server.class);
+	private static final Logger log = LoggerFactory.getLogger(Server.class);
 
 	private static ScheduledExecutorService threadPool = Executors.newScheduledThreadPool(5);
 	private static MessageFactory mfact;
@@ -76,7 +76,7 @@ public class Server implements Runnable {
 		} catch (IOException ex) {
 			log.error("Exception occurred...", ex);
 		}
-		log.debug(String.format("Exiting after reading %d requests", count));
+		log.debug("Exiting after reading {} requests", count);
 		try {
 			socket.close();
 		} catch (IOException ex) {}
@@ -94,7 +94,7 @@ public class Server implements Runnable {
 
 		public void run() {
 			try {
-				log.debug(String.format("Parsing incoming: '%s'", new String(msg)));
+				log.debug("Parsing incoming: '{}'", new String(msg));
 				IsoMessage incoming = mfact.parseMessage(msg, 12);
 				//Create a response
 				IsoMessage response = mfact.createResponse(incoming);
@@ -104,7 +104,7 @@ public class Server implements Runnable {
 				response.setValue(39, 0, IsoType.NUMERIC, 2);
 				response.setValue(61, String.format("Dynamic data generated on %1$tF at %1$tT", new Date()),
 					IsoType.LLLVAR, 0);
-				log.debug("Sending response conf " + response.getField(38));
+				log.debug("Sending response conf {}", response.getField(38));
 				response.write(sock.getOutputStream(), 2);
 			} catch (ParseException ex) {
 				log.error("Parsing incoming message", ex);
@@ -122,7 +122,7 @@ public class Server implements Runnable {
 		log.info("Waiting for connections...");
 		while (true) {
 			Socket sock = server.accept();
-			log.info(String.format("New connection from %s:%d", sock.getInetAddress(), sock.getPort()));
+			log.info("New connection from {}:{}", sock.getInetAddress(), sock.getPort());
 			new Thread(new Server(sock), "j8583-server").start();
 		}
 	}
