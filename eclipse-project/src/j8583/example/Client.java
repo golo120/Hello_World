@@ -62,6 +62,7 @@ public class Client implements Runnable {
 		sock = socket;
 	}
 
+    /** This method is invoked from a dedicated thread, to read any response from the socket. */
 	public void run() {
 		byte[] lenbuf = new byte[2];
 		try {
@@ -102,9 +103,6 @@ public class Client implements Runnable {
 				log.info("Socket closed because we're done ({} pending)", pending.size());
 			} else {
 				log.error(String.format("Reading responses, %d pending", pending.size()), ex);
-				try {
-					sock.close();
-				} catch (IOException ex2) {};
 			}
 		} finally {
 			if (sock != null) {
