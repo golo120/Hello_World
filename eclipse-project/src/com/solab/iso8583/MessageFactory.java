@@ -153,18 +153,15 @@ public class MessageFactory {
 		resp.setBinary(request.isBinary());
 		resp.setType(request.getType() + 16);
 		resp.setEtx(etx);
-		//Copy the values from the template
+		//Copy the values from the template or the request (request has preference)
 		IsoMessage templ = typeTemplates.get(resp.getType());
 		if (templ != null) {
 			for (int i = 2; i < 128; i++) {
-				if (templ.hasField(i)) {
+				if (request.hasField(i)) {
+					resp.setField(i, request.getField(i).clone());
+				} else if (templ.hasField(i)) {
 					resp.setField(i, templ.getField(i).clone());
 				}
-			}
-		}
-		for (int i = 2; i < 128; i++) {
-			if (request.hasField(i)) {
-				resp.setField(i, request.getField(i).clone());
 			}
 		}
 		return resp;
