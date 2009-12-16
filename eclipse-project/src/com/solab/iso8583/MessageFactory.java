@@ -155,7 +155,13 @@ public class MessageFactory {
 		resp.setEtx(etx);
 		//Copy the values from the template or the request (request has preference)
 		IsoMessage templ = typeTemplates.get(resp.getType());
-		if (templ != null) {
+		if (templ == null) {
+			for (int i = 2; i < 128; i++) {
+				if (request.hasField(i)) {
+					resp.setField(i, request.getField(i).clone());
+				}
+			}
+		} else {
 			for (int i = 2; i < 128; i++) {
 				if (request.hasField(i)) {
 					resp.setField(i, request.getField(i).clone());
