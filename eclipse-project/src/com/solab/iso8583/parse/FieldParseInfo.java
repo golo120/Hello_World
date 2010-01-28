@@ -77,6 +77,9 @@ public class FieldParseInfo {
 			if (custom == null) {
 				return new IsoValue<String>(type, new String(buf, pos + 2, length), null);
 			} else {
+				if (pos+2 > buf.length || length+pos+2 > buf.length) {
+					throw new ParseException("Insufficient data for LLVAR field", pos);
+				}
 				IsoValue<T> v = new IsoValue<T>(type, custom.decodeField(new String(buf, pos + 2, length)), custom);
 				if (v.getValue() == null) {
 					return new IsoValue<String>(type, new String(buf, pos + 2, length), null);
