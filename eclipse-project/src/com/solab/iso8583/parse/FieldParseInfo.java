@@ -63,6 +63,10 @@ public class FieldParseInfo {
 	 * IsoValue with the correct data type in it. */
 	public <T extends Object> IsoValue<?> parse(byte[] buf, int pos, CustomField<T> custom) throws ParseException {
 		if (type == IsoType.NUMERIC || type == IsoType.ALPHA) {
+			if (pos+length > buf.length) {
+				throw new ParseException(String.format("Insufficient data for ALPHA or NUMERIC field of length %d, pos %d",
+					length, pos), pos);
+			}
 			if (custom == null) {
 				return new IsoValue<String>(type, new String(buf, pos, length), length, null);
 			} else {
@@ -74,12 +78,12 @@ public class FieldParseInfo {
 			}
 		} else if (type == IsoType.LLVAR) {
 			length = ((buf[pos] - 48) * 10) + (buf[pos + 1] - 48);
+			if (pos+2 > buf.length || length+pos+2 > buf.length) {
+				throw new ParseException(String.format("Insufficient data for LLVAR field, pos %d", pos), pos);
+			}
 			if (custom == null) {
 				return new IsoValue<String>(type, new String(buf, pos + 2, length), null);
 			} else {
-				if (pos+2 > buf.length || length+pos+2 > buf.length) {
-					throw new ParseException("Insufficient data for LLVAR field", pos);
-				}
 				IsoValue<T> v = new IsoValue<T>(type, custom.decodeField(new String(buf, pos + 2, length)), custom);
 				if (v.getValue() == null) {
 					return new IsoValue<String>(type, new String(buf, pos + 2, length), null);
@@ -88,12 +92,12 @@ public class FieldParseInfo {
 			}
 		} else if (type == IsoType.LLLVAR) {
 			length = ((buf[pos] - 48) * 100) + ((buf[pos + 1] - 48) * 10) + (buf[pos + 2] - 48);
+			if (pos+3 > buf.length || length+pos+3 > buf.length) {
+				throw new ParseException(String.format("Insufficient data for LLLVAR field, pos %d", pos), pos);
+			}
 			if (custom == null) {
 				return new IsoValue<String>(type, new String(buf, pos + 3, length), null);
 			} else {
-				if (pos+3 > buf.length || length+pos+3 > buf.length) {
-					throw new ParseException("Insufficient data for LLLVAR field", pos);
-				}
 				IsoValue<T> v = new IsoValue<T>(type, custom.decodeField(new String(buf, pos + 3, length)), custom);
 				if (v.getValue() == null) {
 					//problems decoding? return the string
@@ -102,12 +106,20 @@ public class FieldParseInfo {
 				return v;
 			}
 		} else if (type == IsoType.AMOUNT) {
+			if (pos+12 > buf.length) {
+				throw new ParseException(String.format("Insufficient data for AMOUNT field of length %d, pos %d",
+					length, pos), pos);
+			}
 			byte[] c = new byte[13];
 			System.arraycopy(buf, pos, c, 0, 10);
 			System.arraycopy(buf, pos + 10, c, 11, 2);
 			c[10] = '.';
 			return new IsoValue<BigDecimal>(type, new BigDecimal(new String(c)), null);
 		} else if (type == IsoType.DATE10) {
+			if (pos+10 > buf.length) {
+				throw new ParseException(String.format("Insufficient data for DATE10 field of length %d, pos %d",
+					length, pos), pos);
+			}
 			//A SimpleDateFormat in the case of dates won't help because of the missing data
 			//we have to use the current date for reference and change what comes in the buffer
 			Calendar cal = Calendar.getInstance();
@@ -122,6 +134,10 @@ public class FieldParseInfo {
 			}
 			return new IsoValue<Date>(type, cal.getTime(), null);
 		} else if (type == IsoType.DATE4) {
+			if (pos+4 > buf.length) {
+				throw new ParseException(String.format("Insufficient data for DATE4 field of length %d, pos %d",
+					length, pos), pos);
+			}
 			Calendar cal = Calendar.getInstance();
 			cal.set(Calendar.HOUR, 0);
 			cal.set(Calendar.MINUTE, 0);
