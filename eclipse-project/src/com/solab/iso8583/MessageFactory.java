@@ -311,7 +311,7 @@ public class MessageFactory {
 	/** Sets whether the factory should set the current date on newly created messages,
 	 * in field 7. Default is false. */
 	public void setAssignDate(boolean flag) {
-		setDate = true;
+		setDate = flag;
 	}
 	/** Returns true if the factory is assigning the current date to newly created messages
 	 * (field 7). Default is false. */

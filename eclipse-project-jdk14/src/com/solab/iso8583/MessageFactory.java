@@ -29,8 +29,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.solab.iso8583.parse.ConfigParser;
 import com.solab.iso8583.parse.FieldParseInfo;
@@ -51,7 +51,7 @@ import com.solab.iso8583.parse.FieldParseInfo;
  */
 public class MessageFactory {
 
-	protected final Log log = LogFactory.getLog(getClass());
+	protected final Logger log = LoggerFactory.getLogger(getClass());
 
 	/** This map stores the message template for each message type. */
 	private Map typeTemplates = new HashMap();
@@ -289,7 +289,7 @@ public class MessageFactory {
 	/** Sets whether the factory should set the current date on newly created messages,
 	 * in field 7. Default is false. */
 	public void setAssignDate(boolean flag) {
-		setDate = true;
+		setDate = flag;
 	}
 	/** Returns true if the factory is assigning the current date to newly created messages
 	 * (field 7). Default is false. */
