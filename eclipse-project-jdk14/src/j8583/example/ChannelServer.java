@@ -11,8 +11,8 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.Iterator;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.solab.iso8583.IsoMessage;
 import com.solab.iso8583.IsoType;
@@ -26,7 +26,7 @@ import com.solab.iso8583.parse.ConfigParser;
  */
 public class ChannelServer implements Runnable {
 
-	private static final Log log = LogFactory.getLog(ChannelServer.class);
+	private static final Logger log = LoggerFactory.getLogger(ChannelServer.class);
 	private static MessageFactory mfact;
 
 	private SocketChannel socket;

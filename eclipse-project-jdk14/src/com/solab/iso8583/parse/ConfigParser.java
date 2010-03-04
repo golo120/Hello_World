@@ -27,8 +27,8 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -45,7 +45,7 @@ import com.solab.iso8583.MessageFactory;
  */
 public class ConfigParser {
 
-	private final static Log log = LogFactory.getLog(ConfigParser.class);
+	private final static Logger log = LoggerFactory.getLogger(ConfigParser.class);
 
 	/** Creates a message factory configured from the default file, which is j8583.xml
 	 * located in the root of the classpath. */

@@ -24,8 +24,8 @@ import java.net.Socket;
 import java.text.ParseException;
 import java.util.Date;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.solab.iso8583.IsoMessage;
 import com.solab.iso8583.IsoType;
@@ -39,7 +39,7 @@ import com.solab.iso8583.parse.ConfigParser;
  */
 public class Server implements Runnable {
 
-	private static final Log log = LogFactory.getLog(Server.class);
+	private static final Logger log = LoggerFactory.getLogger(Server.class);
 
 	private static MessageFactory mfact;
 

@@ -26,8 +26,8 @@ import java.util.Date;
 import java.util.Hashtable;
 import java.util.Random;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.solab.iso8583.IsoMessage;
 import com.solab.iso8583.IsoType;
@@ -43,7 +43,7 @@ import com.solab.iso8583.parse.ConfigParser;
  */
 public class Client implements Runnable {
 
-	private static final Log log = LogFactory.getLog(Client.class);
+	private static final Logger log = LoggerFactory.getLogger(Client.class);
 
 	private static final String[] data = new String[]{
 		"1234567890", "5432198765", "1020304050", "abcdefghij", "AbCdEfGhIj",
