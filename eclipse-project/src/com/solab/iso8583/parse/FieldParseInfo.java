@@ -62,6 +62,9 @@ public class FieldParseInfo {
 	/** Parses the character data from the buffer and returns the
 	 * IsoValue with the correct data type in it. */
 	public <T extends Object> IsoValue<?> parse(byte[] buf, int pos, CustomField<T> custom) throws ParseException {
+		if (pos < 0) {
+			throw new ParseException(String.format("Invalid position %d", pos), pos);
+		}
 		if (type == IsoType.NUMERIC || type == IsoType.ALPHA) {
 			if (pos+length > buf.length) {
 				throw new ParseException(String.format("Insufficient data for ALPHA or NUMERIC field of length %d, pos %d",
@@ -78,6 +81,9 @@ public class FieldParseInfo {
 			}
 		} else if (type == IsoType.LLVAR) {
 			length = ((buf[pos] - 48) * 10) + (buf[pos + 1] - 48);
+			if (length < 0) {
+				throw new ParseException(String.format("Invalid LLVAR length %d pos %d", length, pos), pos);
+			}
 			if (pos+2 > buf.length || length+pos+2 > buf.length) {
 				throw new ParseException(String.format("Insufficient data for LLVAR field, pos %d", pos), pos);
 			}
@@ -92,6 +98,9 @@ public class FieldParseInfo {
 			}
 		} else if (type == IsoType.LLLVAR) {
 			length = ((buf[pos] - 48) * 100) + ((buf[pos + 1] - 48) * 10) + (buf[pos + 2] - 48);
+			if (length < 0) {
+				throw new ParseException(String.format("Invalid LLLVAR length %d pos %d", length, pos), pos);
+			}
 			if (pos+3 > buf.length || length+pos+3 > buf.length) {
 				throw new ParseException(String.format("Insufficient data for LLLVAR field, pos %d", pos), pos);
 			}
