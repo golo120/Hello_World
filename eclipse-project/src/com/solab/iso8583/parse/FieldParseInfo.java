@@ -123,7 +123,11 @@ public class FieldParseInfo {
 			System.arraycopy(buf, pos, c, 0, 10);
 			System.arraycopy(buf, pos + 10, c, 11, 2);
 			c[10] = '.';
-			return new IsoValue<BigDecimal>(type, new BigDecimal(new String(c)), null);
+			try {
+				return new IsoValue<BigDecimal>(type, new BigDecimal(new String(c)), null);
+			} catch (NumberFormatException ex) {
+				throw new ParseException(String.format("Cannot read amount '%s' pos %d", new String(c), pos), pos);
+			}
 		} else if (type == IsoType.DATE10) {
 			if (pos+10 > buf.length) {
 				throw new ParseException(String.format("Insufficient data for DATE10 field of length %d, pos %d",
