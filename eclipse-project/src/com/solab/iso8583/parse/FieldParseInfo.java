@@ -203,12 +203,12 @@ public class FieldParseInfo {
 			//A long covers up to 18 digits
 			if (length < 19) {
 				long l = 0;
-				int power = 1;
+				long power = 1L;
 				for (int i = pos + (length / 2) + (length % 2) - 1; i >= pos; i--) {
 					l += (buf[i] & 0x0f) * power;
-					power *= 10;
+					power *= 10L;
 					l += ((buf[i] & 0xf0) >> 4) * power;
-					power *= 10;
+					power *= 10L;
 				}
 				return new IsoValue<Number>(IsoType.NUMERIC, l, length, null);
 			} else {
