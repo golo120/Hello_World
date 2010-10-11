@@ -129,7 +129,7 @@ public class MessageFactory {
 		//Copy the values from the template
 		IsoMessage templ = typeTemplates.get(type);
 		if (templ != null) {
-			for (int i = 2; i < 128; i++) {
+			for (int i = 2; i <= 128; i++) {
 				if (templ.hasField(i)) {
 					m.setField(i, templ.getField(i).clone());
 				}
