@@ -336,4 +336,12 @@ public class IsoMessage {
     	return bout.toByteArray();
     }
 
+    //These are for Groovy compat
+    public void putAt(int i, IsoValue<?> v) {
+    	setField(i, v);
+    }
+    public IsoValue<?> getAt(int i) {
+    	return getField(i);
+    }
+
 }

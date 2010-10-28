@@ -160,4 +160,12 @@ public enum IsoType {
 		throw new IllegalArgumentException("Cannot format BigDecimal as " + this);
 	}
 
+	public IsoValue<Object> value(Object val, int len) {
+		return new IsoValue<Object>(this, val, len);
+	}
+
+	public IsoValue<Object> value(Object val) {
+		return new IsoValue<Object>(this, val);
+	}
+
 }
