@@ -140,18 +140,19 @@ public class IsoMessage {
      * @param t The ISO type.
      * @param length The length of the field, used for ALPHA and NUMERIC values only, ignored
      * with any other type. */
-    public void setValue(int index, Object value, CustomField<Object> encoder, IsoType t, int length) {
+	@SuppressWarnings("unchecked")
+    public void setValue(int index, Object value, CustomField<?> encoder, IsoType t, int length) {
     	if (index < 2 || index > 128) {
     		throw new IndexOutOfBoundsException("Field index must be between 2 and 128");
     	}
     	if (value == null) {
     		fields.remove(index);
     	} else {
-    		IsoValue<?> v = null;
+    		IsoValue v = null;
     		if (t.needsLength()) {
-    			v = new IsoValue<Object>(t, value, length, encoder);
+    			v = new IsoValue(t, value, length, encoder);
     		} else {
-    			v = new IsoValue<Object>(t, value, encoder);
+    			v = new IsoValue(t, value, encoder);
     		}
     		fields.put(index, v);
     	}
@@ -337,11 +338,24 @@ public class IsoMessage {
     }
 
     //These are for Groovy compat
+    /** Sets the specified value in the specified field, just like {@link #setField(int, IsoValue)}. */
     public void putAt(int i, IsoValue<?> v) {
     	setField(i, v);
     }
+    /** Returns the IsoValue in the specified field, just like {@link #getField(int)}. */
     public IsoValue<?> getAt(int i) {
     	return getField(i);
+    }
+
+    /** Copies the specified fields from the other message into the recipient. If a specified field is
+     * not present in the source message it is simply ignored. */
+    public void copyFieldsFrom(IsoMessage src, int...idx) {
+    	for (int i : idx) {
+    		IsoValue<?> v = src.getField(i);
+    		if (v != null) {
+        		setValue(i, v.getValue(), v.getType(), v.getLength());
+    		}
+    	}
     }
 
 }

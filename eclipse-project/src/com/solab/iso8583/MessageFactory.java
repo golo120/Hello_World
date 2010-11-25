@@ -69,6 +69,22 @@ public class MessageFactory {
 	/** Indicates if the factory should create binary messages and also parse binary messages. */
 	private boolean useBinary;
 	private int etx = -1;
+	/** Flag to specify if missing fields should be ignored as long as they're at the end of the message. */
+	private boolean ignoreLast;
+
+	/** Setting this property to true avoids getting a ParseException when parsing messages that don't have
+	 * the last field specified in the bitmap. This is common with certain providers where field 128 is
+	 * specified in the bitmap but not actually included in the messages. Default is false, which has
+	 * been the behavior in previous versions when this option didn't exist. */
+	public void setIgnoreLastMissingField(boolean flag) {
+		ignoreLast = flag;
+	}
+	/** This flag indicates if the MessageFactory throws an exception if the last field of a message
+	 * is not really present even though it's specified in the bitmap. Default is false which means
+	 * an exception is thrown. */
+	public boolean getIgnoreLastMissingField() {
+		return ignoreLast;
+	}
 
 	/** Specifies a map for custom field encoder/decoders. The keys are the field numbers. */
 	public void setCustomFields(Map<Integer, CustomField<?>> value) {
@@ -289,18 +305,23 @@ public class MessageFactory {
 		for (Integer i : index) {
 			FieldParseInfo fpi = parseGuide.get(i);
 			if (bs.get(i - 1)) {
-				IsoValue<?> val = useBinary ? fpi.parseBinary(buf, pos, getCustomField(i)) : fpi.parse(buf, pos, getCustomField(i));
-				m.setField(i, val);
-				if (useBinary && !(val.getType() == IsoType.ALPHA || val.getType() == IsoType.LLVAR
-						|| val.getType() == IsoType.LLLVAR)) {
-					pos += (val.getLength() / 2) + (val.getLength() % 2);
+				if (ignoreLast && pos >= buf.length && i == index.get(index.size() -1)) {
+					log.warn("Field {} is not really in the message even though it's in the bitmap", i);
+					bs.clear(i - 1);
 				} else {
-					pos += val.getLength();
-				}
-				if (val.getType() == IsoType.LLVAR) {
-					pos += useBinary ? 1 : 2;
-				} else if (val.getType() == IsoType.LLLVAR) {
-					pos += useBinary ? 2 : 3;
+					IsoValue<?> val = useBinary ? fpi.parseBinary(buf, pos, getCustomField(i)) : fpi.parse(buf, pos, getCustomField(i));
+					m.setField(i, val);
+					if (useBinary && !(val.getType() == IsoType.ALPHA || val.getType() == IsoType.LLVAR
+							|| val.getType() == IsoType.LLLVAR)) {
+						pos += (val.getLength() / 2) + (val.getLength() % 2);
+					} else {
+						pos += val.getLength();
+					}
+					if (val.getType() == IsoType.LLVAR) {
+						pos += useBinary ? 1 : 2;
+					} else if (val.getType() == IsoType.LLLVAR) {
+						pos += useBinary ? 2 : 3;
+					}
 				}
 			}
 		}
