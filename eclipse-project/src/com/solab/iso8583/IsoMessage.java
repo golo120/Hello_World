@@ -50,6 +50,8 @@ public class IsoMessage {
     /** Stores the optional ISO header. */
     private String isoHeader;
     private int etx = -1;
+    /** Flag to enforce secondary bitmap even if empty. */
+    private boolean forceb2;
 
     /** Creates a new empty message with no values set. */
     public IsoMessage() {
@@ -58,6 +60,14 @@ public class IsoMessage {
     /** Creates a new message with the specified ISO header. This will be prepended to the message. */
     IsoMessage(String header) {
     	isoHeader = header;
+    }
+
+    /** If set, this flag will cause the secondary bitmap to be written even if it's not needed. */
+    public void setForceSecondaryBitmap(boolean flag) {
+    	forceb2 = flag;
+    }
+    public boolean getForceSecondaryBitmap() {
+    	return forceb2;
     }
 
     /** Sets the string to be sent as ISO header, that is, after the length header but before the message type. 
@@ -282,12 +292,14 @@ public class IsoMessage {
     	ArrayList<Integer> keys = new ArrayList<Integer>();
     	keys.addAll(fields.keySet());
     	Collections.sort(keys);
-    	BitSet bs = new BitSet(64);
+    	BitSet bs = new BitSet(forceb2 ? 128 : 64);
     	for (Integer i : keys) {
     		bs.set(i - 1);
     	}
-    	//Extend to 128 if needed
-    	if (bs.length() > 64) {
+    	if (forceb2) {
+    		bs.set(0);
+    	} else if (bs.length() > 64) {
+        	//Extend to 128 if needed
     		BitSet b2 = new BitSet(128);
     		b2.or(bs);
     		bs = b2;

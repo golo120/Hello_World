@@ -71,6 +71,15 @@ public class MessageFactory {
 	private int etx = -1;
 	/** Flag to specify if missing fields should be ignored as long as they're at the end of the message. */
 	private boolean ignoreLast;
+	private boolean forceb2;
+
+	/** Sets or clears the flag to pass to new messages, to include a secondary bitmap even if it's not needed. */
+	public void setForceSecondaryBitmap(boolean flag) {
+		forceb2 = flag;
+	}
+	public boolean getForceSecondaryBitmap() {
+		return forceb2;
+	}
 
 	/** Setting this property to true avoids getting a ParseException when parsing messages that don't have
 	 * the last field specified in the bitmap. This is common with certain providers where field 128 is
@@ -141,6 +150,7 @@ public class MessageFactory {
 		m.setType(type);
 		m.setEtx(etx);
 		m.setBinary(useBinary);
+		m.setForceSecondaryBitmap(forceb2);
 
 		//Copy the values from the template
 		IsoMessage templ = typeTemplates.get(type);
@@ -169,6 +179,7 @@ public class MessageFactory {
 		resp.setBinary(request.isBinary());
 		resp.setType(request.getType() + 16);
 		resp.setEtx(etx);
+		resp.setForceSecondaryBitmap(forceb2);
 		//Copy the values from the template or the request (request has preference)
 		IsoMessage templ = typeTemplates.get(resp.getType());
 		if (templ == null) {
